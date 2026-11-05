@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Générateur de prompts – Space Grammar</title>
+<style>
+  :root { --bg:#0c0a18; --card:#17133a; --main:#00e6e6; --acc:#ff00ff; --txt:#eef; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:Arial,sans-serif; background:var(--bg); color:var(--txt); padding:16px; }
+  h1 { color:var(--main); margin:0 0 4px; }
+  .sub { color:#99a; margin-bottom:16px; }
+  .panel { background:var(--card); border:1px solid #2c2766; border-radius:10px; padding:14px; margin-bottom:16px; }
+  .row { display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end; }
+  label { display:flex; flex-direction:column; font-size:.85em; color:#aab; gap:4px; }
+  select, input[type=text], textarea { background:#0c0a18; color:#fff; border:1px solid #3a3480; border-radius:6px; padding:8px; font-size:.95em; }
+  textarea { width:100%; min-height:130px; resize:vertical; font-family:Consolas,monospace; font-size:.85em; line-height:1.4; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .chip { background:#0c0a18; border:1px solid var(--main); color:var(--main); padding:6px 12px; border-radius:20px; cursor:pointer; font-size:.85em; }
+  .chip.on { background:var(--main); color:#000; font-weight:bold; }
+  .card { background:var(--card); border:1px solid #2c2766; border-radius:10px; padding:14px; margin-bottom:14px; }
+  .card h3 { margin:0 0 4px; color:#ffc400; }
+  .meta { font-size:.8em; color:#99a; margin-bottom:8px; }
+  .meta b { color:var(--main); }
+  .tag { display:inline-block; font-size:.7em; padding:2px 7px; border-radius:10px; margin-left:6px; vertical-align:middle; }
+  .must { background:#ff00ff33; color:#ff9bff; } .opt { background:#ffffff22; color:#ccd; }
+  button.copy { background:#2ecc71; color:#fff; border:none; border-radius:6px; padding:9px 16px; font-weight:bold; cursor:pointer; margin-top:8px; }
+  button.copy.done { background:#ffc400; color:#000; }
+  button.big { background:var(--acc); color:#fff; border:none; border-radius:8px; padding:10px 16px; font-weight:bold; cursor:pointer; }
+  .tips { font-size:.88em; line-height:1.55; color:#cce; }
+  .tips li { margin-bottom:4px; }
+</style>
+</head>
+<body>
+<h1>🚀 Générateur de prompts – Space Grammar</h1>
+<div class="sub">Chaque prompt est <b>complet</b> : un seul bloc à copier-coller, rien à assembler. Change le style en haut, tous les prompts se mettent à jour.</div>
+
+<div class="panel">
+  <div class="row">
+    <label>Style graphique (le même pour TOUTES les images)
+      <select id="style">
+        <option value="pixel">Pixel art 16 bits rétro</option>
+        <option value="cartoon" selected>Cartoon arcade néon (contours nets)</option>
+        <option value="mobile">Jeu mobile soft (dégradés, brillance)</option>
+        <option value="custom">Personnalisé (champ ci-dessous)</option>
+      </select>
+    </label>
+    <label>Fond des sprites (vaisseaux, boss, planètes)
+      <select id="bgmode">
+        <option value="green" selected>Fond vert uni #00FF00 (facile à détourer)</option>
+        <option value="white">Fond blanc uni</option>
+        <option value="transparent">Fond transparent (si l'outil sait)</option>
+      </select>
+    </label>
+    <label style="flex:1;min-width:220px">Style personnalisé (utilisé si « Personnalisé »)
+      <input type="text" id="customStyle" placeholder="ex : hand-drawn crayon style, pastel colors…">
+    </label>
+    <button class="big" id="copyAll">📋 Copier TOUS les prompts d'une catégorie affichée</button>
+  </div>
+  <div class="chips" id="chips"></div>
+</div>
+
+<div class="panel tips">
+  <b>Conseils rapides</b>
+  <ul>
+    <li><b>Version minimale pour démarrer vite</b> : les prompts marqués <span class="tag must">PRIORITÉ</span> (vaisseau niveau 1, 3 ennemis, 1 boss, 1 décor). Le jeu fonctionne déjà sans aucune image (décors de secours dessinés par le code) et prend chaque image dès que tu la déposes dans le bon dossier avec le <b>bon nom de fichier</b>.</li>
+    <li>Génère toute la série dans <b>la même conversation / session</b> de ton outil d'images pour garder une cohérence de style. Pour l'évolution du vaisseau, joins l'image du niveau précédent comme référence si l'outil le permet.</li>
+    <li>Le vaisseau et les ennemis sont demandés dans <b>une seule teinte</b> (cyan pour toi, magenta/violet pour les ennemis) : le jeu change la couleur par rotation de teinte, c'est ce qui permet la recoloration et de varier les ennemis par planète.</li>
+    <li>Les prompts sont en <b>anglais</b> (meilleurs résultats). Si tu préfères en français, dis-le-moi et je te les traduis.</li>
+  </ul>
+</div>
+
+<div id="list"></div>
+
+<script>
+const STYLES = {
+  pixel: "pixel art, 16-bit retro arcade game style, crisp visible pixels, limited color palette, clean 1-pixel outlines, no blur, no anti-aliasing smoothing",
+  cartoon: "clean cartoon vector style, bold dark outlines, flat cel shading with glossy neon highlights, vibrant saturated colors, friendly and playful, polished arcade game art",
+  mobile: "polished casual mobile game art, soft gradients, rounded shapes, gentle glow and shine, slightly painterly, friendly and colorful"
+};
+const BG = {
+  green: "Isolated on a perfectly flat solid pure green background (#00FF00), no shadow on the background, no gradient, no floor, crisp clean edges for easy cut-out.",
+  white: "Isolated on a perfectly flat solid pure white background, no shadow on the background, no gradient, no floor, crisp clean edges for easy cut-out.",
+  transparent: "Isolated on a transparent background (PNG with alpha), no shadow on the background, crisp clean edges."
+};
+const NEG = "No text, no letters, no numbers, no watermark, no signature, no frame, no border, no user interface, no extra objects.";
+
+const SHIP_COLOR = "Color rule: paint the whole ship using ONLY shades of one single cyan hue (around #00E6E6) plus white highlights and dark navy shadows; no other saturated colors at all (it will be recolored by hue rotation in the game).";
+const ENEMY_COLOR = "Color rule: paint the whole ship using ONLY shades of one single magenta/purple hue (around #B000B0) plus pale highlights and dark shadows; glowing parts may be bright yellow; no other saturated colors (it will be recolored by hue rotation in the game).";
+const SHIP_VIEW = "View: strict top-down 2D view, ship pointing straight UP, perfectly centered and symmetrical, fills about 85% of a square 1:1 canvas, 1024x1024.";
+const ENEMY_VIEW = "View: strict top-down 2D view, ship pointing straight DOWN (facing the player), perfectly centered and symmetrical, fills about 85% of a square 1:1 canvas, 1024x1024.";
+const EVOL = "Evolution rule: this is the next evolution of the same player ship family; if a reference image of the previous level is attached, keep exactly its design language, silhouette and cockpit and only upgrade it.";
+const SPHERE = "Sphere rule (very important): the planet must be a true 3D globe seen from space in orthographic view, like a photograph taken from orbit. At the center of the disk the surface is seen straight from above with normal proportions; the farther a feature is from the center, the more it is foreshortened: terrain, mountains, islands, canyons, cracks and clouds become compressed and stretched along the edge (limb) of the globe and follow its curvature, so features near the rim look flat and squeezed while features at the center look wide and round. Cloud bands and weather swirls wrap around the sphere along curved latitude lines. Lighting from the upper left with a soft shadow side (terminator) darkening toward the lower right, a slightly darker limb, and a thin bright atmosphere glow along the rim. Do NOT draw a flat top-down map, an isometric landscape, a ground-level horizon, cliffs seen from the side, or a flat texture simply cropped into a circle.";
+const PLANETVIEW = "Composition: square 1:1 full-bleed space scene, 1024x1024, the whole planet globe fully visible as a clean round disk of about 55% of the canvas width, centered horizontally in the upper half, with dark space around it; the lower half is calm and low in detail with dark tones and faint stars so that words and sprites stay readable on top; vignette darker at the edges; no ships, no characters. " + SPHERE;
+const BGVIEW = "Composition: square 1:1 full-bleed space scene, 1024x1024, the planet or main element in the upper third, the center and lower area calm and low in detail with darker tones so that words and sprites stay readable on top, vignette darker at the edges, no ships, no characters.";
+const ORBVIEW = "View: a single perfectly round planet globe centered, fills about 85% of a square 1:1 canvas, 1024x1024. " + SPHERE;
+
+const FXVIEW = "View: strict top-down 2D view, a single explosion centered and round, fills about 90% of a square 1:1 canvas, 1024x1024, no ship or spaceship visible inside it. Do not use any green color anywhere in the explosion, so that a pure green background can be removed cleanly.";
+
+// cat: ship | enemy | boss | bg | orb | fx
+const ITEMS = [
+ {cat:"ship", file:"assets/ship/ship_tier1.png", must:true, label:"Vaisseau joueur – Niveau 1 (départ)",
+  subj:"A small, simple starter spaceship for a kids' arcade space shooter: compact rounded fuselage, two short stubby wings, one small engine at the back with a little flame, a round glass cockpit.", extra:SHIP_VIEW+" "+SHIP_COLOR},
+ {cat:"ship", file:"assets/ship/ship_tier2.png", label:"Vaisseau joueur – Niveau 2",
+  subj:"An upgraded small fighter spaceship: slightly longer fuselage, wider swept-back wings, two small laser cannons on the wings, small side thrusters, a round glass cockpit.", extra:EVOL+" "+SHIP_VIEW+" "+SHIP_COLOR},
+ {cat:"ship", file:"assets/ship/ship_tier3.png", label:"Vaisseau joueur – Niveau 3",
+  subj:"A sturdy space fighter: armored plates on the hull, two pairs of laser cannons, bigger twin engines with bright flames, angular wings with small fins, cockpit with a reflective glass dome.", extra:EVOL+" "+SHIP_VIEW+" "+SHIP_COLOR},
+ {cat:"ship", file:"assets/ship/ship_tier4.png", label:"Vaisseau joueur – Niveau 4",
+  subj:"An elite battle fighter: large wings with glowing energy blades along the edges, shield emitters on the wingtips, triple engines with strong flames, heavy armored nose, glowing cockpit.", extra:EVOL+" "+SHIP_VIEW+" "+SHIP_COLOR},
+ {cat:"ship", file:"assets/ship/ship_tier5.png", label:"Vaisseau joueur – Niveau 5 (légendaire)",
+  subj:"A legendary flagship starfighter: majestic wide wings with luminous energy arcs, glowing white energy core in the center, ornate armor, large triple cannons, powerful engines with long flames, radiating a heroic aura.", extra:EVOL+" "+SHIP_VIEW+" "+SHIP_COLOR},
+
+ {cat:"enemy", file:"assets/enemies/scout.png", must:true, label:"Ennemi – Éclaireur (flotte, petit)",
+  subj:"A small alien scout drone fighter: angular dart-shaped body, two sharp little wings, a single glowing eye-like sensor in the middle, slightly menacing but not scary for children.", extra:ENEMY_VIEW+" "+ENEMY_COLOR},
+ {cat:"enemy", file:"assets/enemies/cruiser.png", must:true, label:"Ennemi – Croiseur (flotte, moyen)",
+  subj:"A medium alien cruiser: wide armored hull with ridged plates, two side cannons, a glowing yellow core on the front, small spikes along the wings.", extra:ENEMY_VIEW+" "+ENEMY_COLOR},
+ {cat:"enemy", file:"assets/enemies/admiral.png", must:true, label:"Ennemi – Amiral (gros, 2 coups)",
+  subj:"A large imposing alien admiral flagship: heavy spiked armor, a crest or crown-like ornament at the front, a command tower in the middle with a glowing yellow eye-like core, many small cannons, medals-like golden details, looks like the leader of a fleet.", extra:ENEMY_VIEW+" "+ENEMY_COLOR},
+
+ {cat:"boss", file:"assets/bosses/boss_1.png", must:true, label:"Boss 1 – Gardien des Dunes (planètes 1 et 4)",
+  subj:"A giant alien mechanical scorpion-like warship boss: huge armored body, two big claws on the sides, a segmented tail with a glowing tip, many glowing yellow eyes, menacing but cartoonish and kid-friendly, no gore.", extra:"View: top-down 2D view, facing DOWN toward the player, centered, fills about 90% of a landscape 4:3 canvas, 1536x1152. "+ENEMY_COLOR},
+ {cat:"boss", file:"assets/bosses/boss_2.png", label:"Boss 2 – Kraken des Abysses (planètes 2 et 5)",
+  subj:"A giant alien mothership boss shaped like a mechanical kraken or jellyfish: dome-shaped armored head with glowing core, many long tentacles with small cannons at their tips, glowing yellow eyes, menacing but cartoonish and kid-friendly, no gore.", extra:"View: top-down 2D view, facing DOWN toward the player, centered, fills about 90% of a landscape 4:3 canvas, 1536x1152. "+ENEMY_COLOR},
+ {cat:"boss", file:"assets/bosses/boss_3.png", label:"Boss 3 – Reine de la Ruche (planète 3)",
+  subj:"A giant alien hive-queen warship boss: insect-like armored body with big wing-like plates, a glowing egg-sac core in the belly, pincer mandibles at the front, antennae, many glowing yellow eyes, menacing but cartoonish and kid-friendly, no gore.", extra:"View: top-down 2D view, facing DOWN toward the player, centered, fills about 90% of a landscape 4:3 canvas, 1536x1152. "+ENEMY_COLOR},
+ {cat:"boss", file:"assets/bosses/boss_final.png", label:"Boss FINAL – Empereur de la Forteresse (planète 6)",
+  subj:"A colossal alien emperor battle fortress, the final boss: huge dark armored citadel-ship with crown-like spikes, a big glowing yellow core in the center shielded by rotating plates, several large cannons, ornate royal details, epic and menacing but cartoonish and kid-friendly, no gore.", extra:"View: top-down 2D view, facing DOWN toward the player, centered, fills about 92% of a landscape 4:3 canvas, 1536x1152. "+ENEMY_COLOR},
+
+ {cat:"bg", file:"assets/planets/bg_1.jpg", must:true, bgFull:true, label:"Décor 1 – Rubicon (désert rouge)",
+  subj:"Deep space scene with a red desert planet seen from orbit: rusty red and orange surface crossed by long dark canyon networks, swirling dust storms and pale ochre dust bands, a small bright polar cap at the top, two small moons nearby, a few warm orange stars, dusty orange atmosphere glow.", extra:PLANETVIEW},
+ {cat:"bg", file:"assets/planets/bg_2.jpg", bgFull:true, label:"Décor 2 – Aquaria (océan)",
+  subj:"Deep space scene with an ocean planet seen from orbit: deep blue oceans, large white spiral cloud systems, small green island chains, a thin ring of tiny ice crystals orbiting around it, soft blue atmosphere glow.", extra:PLANETVIEW},
+ {cat:"bg", file:"assets/planets/bg_3.jpg", bgFull:true, label:"Décor 3 – Sylvanis (jungle lumineuse)",
+  subj:"Deep space scene with a jungle planet seen from orbit: dense dark green alien forest continents, glowing turquoise bioluminescent rivers and spots, thick pale green cloud bands, a pale moon nearby.", extra:PLANETVIEW},
+ {cat:"bg", file:"assets/planets/bg_4.jpg", bgFull:true, label:"Décor 4 – Glacius (glace)",
+  subj:"Deep space scene with a frozen ice planet seen from orbit: white and pale blue ice continents with cracked glaciers and crystal ridges, a beautiful green and violet aurora glowing around the upper rim, tiny sparkling stars.", extra:PLANETVIEW},
+ {cat:"bg", file:"assets/planets/bg_5.jpg", bgFull:true, label:"Décor 5 – Ignis (volcans)",
+  subj:"Deep space scene with a volcanic planet seen from orbit: black rock continents cut by rivers of glowing lava, a few erupting volcanoes with ash plumes visible in profile on the rim, dark ash cloud bands, a few floating burning rocks orbiting, red and orange atmosphere glow.", extra:PLANETVIEW},
+ {cat:"bg", file:"assets/planets/bg_6.jpg", bgFull:true, label:"Décor 6 – Nébula Prime (forteresse ennemie)",
+  subj:"Deep space scene with a dark purple planet seen from orbit, a huge alien fortress station standing on its upper rim seen in profile as a dark silhouette with glowing pink windows against a violet nebula, ominous but beautiful, deep violet and black tones.", extra:PLANETVIEW},
+ {cat:"bg", file:"assets/planets/bg_title.jpg", bgFull:true, label:"Décor écran titre (galaxie)",
+  subj:"A spectacular galaxy panorama with a colorful nebula in cyan, magenta and deep blue, many stars, a faint spiral galaxy in the distance, sense of adventure and exploration.", extra:BGVIEW},
+
+ {cat:"orb", file:"assets/planets/orb_1.png", label:"Planète (carte) 1 – Rubicon",
+  subj:"A red desert planet with canyon networks, orange dust bands and a small bright polar cap.", extra:ORBVIEW},
+ {cat:"orb", file:"assets/planets/orb_2.png", label:"Planète (carte) 2 – Aquaria",
+  subj:"A blue ocean planet with spiral white cloud systems and a few green island chains.", extra:ORBVIEW},
+ {cat:"orb", file:"assets/planets/orb_3.png", label:"Planète (carte) 3 – Sylvanis",
+  subj:"A lush jungle planet, dark green forest continents with glowing turquoise rivers and pale cloud bands.", extra:ORBVIEW},
+ {cat:"orb", file:"assets/planets/orb_4.png", label:"Planète (carte) 4 – Glacius",
+  subj:"A frozen ice planet, white and pale blue ice continents with cracks and crystal ridges, faint aurora halo.", extra:ORBVIEW},
+ {cat:"orb", file:"assets/planets/orb_5.png", label:"Planète (carte) 5 – Ignis",
+  subj:"A volcanic planet, black rock continents with bright glowing lava rivers, dark ash cloud bands and an orange atmosphere.", extra:ORBVIEW},
+ {cat:"orb", file:"assets/planets/orb_6.png", label:"Planète (carte) 6 – Nébula Prime",
+  subj:"A dark purple planet with a small glowing fortress-like structure standing on its upper rim seen in profile, and a violet haze.", extra:ORBVIEW},
+
+ {cat:"fx", file:"assets/fx/expl_enemy.png", must:true, label:"Explosion – Ennemi (éclaireur / croiseur)",
+  subj:"A single cartoon explosion burst for a kids' arcade space shooter: a bright white-yellow flash core, a ring of orange and red fireball, a few small spark particles and tiny metal debris flying outward, punchy and satisfying but not scary.", extra:FXVIEW},
+ {cat:"fx", file:"assets/fx/expl_big.png", label:"Explosion – Gros ennemi (amiral / boss)",
+  subj:"A single huge cartoon explosion for a defeated boss in a kids' arcade space shooter: several overlapping fireballs in white, yellow, orange and red, a bright circular shockwave ring, thick stylized smoke puffs, large glowing debris chunks and sparks flying outward, epic and spectacular but not scary.", extra:FXVIEW},
+ {cat:"fx", file:"assets/fx/expl_player.png", label:"Explosion – Notre vaisseau",
+  subj:"A single cartoon energy explosion for the player's spaceship being destroyed: a bright white core, cyan and electric blue fireball, a circular shockwave ring, shattered shield fragments and glowing sparks flying outward, dramatic but friendly and not scary for children.", extra:FXVIEW}
+];
+
+const CATS = {all:"Tout (28)", ship:"Vaisseau joueur (5)", enemy:"Flotte ennemie (3)", boss:"Boss (4)", bg:"Décors (7)", orb:"Planètes de la carte (6)", fx:"Explosions (3)", must:"⭐ Priorité (10)"};
+let currentCat = "all";
+
+function buildPrompt(it){
+  const sel = document.getElementById('style').value;
+  const style = sel==='custom' ? (document.getElementById('customStyle').value.trim() || STYLES.cartoon) : STYLES[sel];
+  const bgmode = document.getElementById('bgmode').value;
+  const parts = [it.subj, "Art style: " + style + ".", it.extra];
+  if (!it.bgFull) parts.push(BG[bgmode]);
+  parts.push(NEG);
+  return parts.join(" ");
+}
+
+function visibleItems(){
+  return ITEMS.filter(it => currentCat==='all' || (currentCat==='must' ? it.must : it.cat===currentCat));
+}
+
+function render(){
+  const chips = document.getElementById('chips');
+  chips.innerHTML = '';
+  Object.entries(CATS).forEach(([k,v]) => {
+    const c = document.createElement('div');
+    c.className = 'chip' + (k===currentCat?' on':'');
+    c.textContent = v;
+    c.onclick = () => { currentCat = k; render(); };
+    chips.appendChild(c);
+  });
+  const list = document.getElementById('list');
+  list.innerHTML = '';
+  visibleItems().forEach((it, i) => {
+    const size = it.cat==='boss' ? '1536×1152 (4:3)' : '1024×1024 (carré)';
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `<h3>${it.label}<span class="tag ${it.must?'must':'opt'}">${it.must?'PRIORITÉ':'optionnel'}</span></h3>
+      <div class="meta">Fichier à nommer : <b>${it.file}</b> · Taille conseillée : ${size}</div>
+      <textarea readonly></textarea>
+      <button class="copy">📋 Copier ce prompt</button>`;
+    const ta = card.querySelector('textarea');
+    ta.value = buildPrompt(it);
+    const btn = card.querySelector('button');
+    btn.onclick = () => copy(ta.value, btn, '📋 Copier ce prompt');
+    list.appendChild(card);
+  });
+}
+
+function copy(text, btn, label){
+  const done = () => { btn.textContent = '✅ Copié !'; btn.classList.add('done'); setTimeout(()=>{btn.textContent=label; btn.classList.remove('done');},1400); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done).catch(()=>fallback(text,done));
+  else fallback(text,done);
+}
+function fallback(text, cb){
+  const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select();
+  try { document.execCommand('copy'); } catch(e){}
+  t.remove(); cb();
+}
+
+document.getElementById('style').onchange = render;
+document.getElementById('bgmode').onchange = render;
+document.getElementById('customStyle').oninput = render;
+document.getElementById('copyAll').onclick = function(){
+  const txt = visibleItems().map(it => `### ${it.label} → ${it.file}\n${buildPrompt(it)}`).join('\n\n');
+  copy(txt, this, '📋 Copier TOUS les prompts d\'une catégorie affichée');
+};
+render();
+</script>
+</body>
+</html>

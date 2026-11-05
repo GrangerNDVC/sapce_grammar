@@ -1,0 +1,103 @@
+:root { --main-color: #00e6e6; --accent-color: #ff00ff; --dark-bg: #0c0a18; --laser: #ffc400; }
+* { box-sizing: border-box; }
+body { font-family: 'Press Start 2P', cursive, Arial, sans-serif; background-color: var(--dark-bg); color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; padding: 6px; }
+button { font-family: inherit; }
+
+#game-container { width: 100%; max-width: 800px; height: 98vh; max-height: 760px; background: #05030c; border: 3px solid var(--main-color); box-shadow: 0 0 20px var(--main-color); border-radius: 10px; position: relative; overflow: hidden; }
+#bg { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 0; }
+#bg::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.55) 100%); }
+#stars { position: absolute; inset: 0; z-index: 1; opacity: .6; background-image:
+  radial-gradient(1px 1px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 60%, #fff, transparent),
+  radial-gradient(2px 2px at 40% 80%, #fff8, transparent), radial-gradient(1px 1px at 85% 15%, #fff, transparent),
+  radial-gradient(1px 1px at 10% 70%, #fff, transparent), radial-gradient(2px 2px at 60% 20%, #fff8, transparent);
+  background-size: 300px 300px; animation: scrollStars 18s linear infinite; }
+@keyframes scrollStars { from { background-position: 0 0; } to { background-position: 0 300px; } }
+
+/* --- écrans --- */
+.overlay { position: absolute; inset: 0; background: rgba(5, 3, 20, 0.88); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 40; padding: 18px; text-align: center; overflow-y: auto; }
+.overlay.show { display: flex; }
+.overlay h2 { color: #ffc400; font-size: 1.3em; margin: 0 0 14px; line-height: 1.4; }
+.overlay p { font-family: Arial, sans-serif; font-size: .95em; line-height: 1.5; max-width: 480px; margin: 0 0 16px; }
+#title-screen { background-color: rgba(5, 3, 20, 0.15); justify-content: flex-end; padding-bottom: 12%; }
+#title-screen h1, #title-screen p { text-shadow: 0 0 8px #000, 0 0 3px #000; }
+#map-screen { background-color: rgba(5, 3, 20, 0.72); }
+#title-screen h1 { color: var(--main-color); text-shadow: 0 0 12px var(--main-color); font-size: 1.5em; line-height: 1.4; margin: 0 0 18px; }
+.btn { padding: 13px 22px; font-size: .85em; cursor: pointer; border: none; border-radius: 10px; background: #2ecc71; color: #fff; margin: 5px; }
+.btn.alt { background: #6a2bb8; } .btn.dark { background: #333a66; } .btn:hover { filter: brightness(1.15); }
+
+/* --- carte des planètes --- */
+#planet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 560px; margin-bottom: 12px; }
+.planet-card { background: #14103a; border: 2px solid #3a3480; border-radius: 12px; padding: 10px 6px; cursor: pointer; font-size: .55em; line-height: 1.5; }
+.planet-card .orb { width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 8px; background-size: cover; background-position: center; box-shadow: 0 0 14px rgba(255,255,255,.25); }
+.planet-card.locked { opacity: .4; cursor: not-allowed; filter: grayscale(.8); }
+.planet-card.done { border-color: #2ecc71; }
+.planet-card.next { border-color: #ffc400; box-shadow: 0 0 14px #ffc400; animation: pulseCard 1.2s ease-in-out infinite; }
+@keyframes pulseCard { 50% { transform: scale(1.04); } }
+.planet-card small { font-family: Arial, sans-serif; color: #aab; font-size: 1.15em; display: block; }
+
+/* --- personnalisation --- */
+#custom-screen .opt-row { margin: 8px 0; font-size: .6em; width: 100%; max-width: 520px; }
+#custom-screen .opt-row > span { display: block; margin-bottom: 6px; color: var(--main-color); }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.swatch { width: 30px; height: 30px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 15px; background: #222; }
+.swatch.on { border-color: #fff; box-shadow: 0 0 8px #fff; }
+.pill { padding: 7px 10px; border-radius: 14px; background: #222a55; cursor: pointer; font-size: .9em; border: 2px solid transparent; }
+.pill.on { border-color: #ffc400; }
+#ship-preview { width: 110px; height: 110px; margin: 4px auto 6px; position: relative; }
+
+/* --- barre d'info --- */
+#info-bar { display: flex; justify-content: space-between; gap: 6px; width: 100%; padding: 7px 10px; background: #000000b0; position: absolute; top: 0; left: 0; z-index: 20; border-bottom: 1px solid var(--main-color); font-size: .55em; line-height: 1.5; }
+#boss-bar-wrap { position: absolute; top: 34px; left: 50%; transform: translateX(-50%); width: 70%; z-index: 20; display: none; text-align: center; font-size: .5em; }
+#boss-bar { height: 12px; background: #3a0a2a; border: 2px solid #fff; border-radius: 8px; overflow: hidden; margin-top: 4px; }
+#boss-bar-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #ff3b3b, #ffc400); transition: width .25s; }
+#banner { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); z-index: 45; color: #ffc400; font-size: 1.2em; text-align: center; line-height: 1.6; text-shadow: 0 0 15px #000, 0 0 6px #000; pointer-events: none; opacity: 0; transition: opacity .4s; width: 90%; }
+
+/* --- ennemis --- */
+.enemy { position: absolute; z-index: 10; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
+.enemy img { width: var(--sz); height: var(--sz); object-fit: contain; display: block; }
+.enemy .fbshape { width: var(--sz); height: calc(var(--sz) * .8); clip-path: polygon(50% 100%, 100% 25%, 85% 0, 15% 0, 0 25%); background: var(--fb); box-shadow: 0 0 10px var(--accent-color); }
+.enemy .word { margin-top: -6px; background: #000000cc; color: var(--main-color); border: 2px solid var(--accent-color); border-radius: 8px; padding: 5px 10px; font-family: Arial, sans-serif; font-weight: bold; font-size: 1em; white-space: nowrap; }
+.enemy.admiral .word { border-color: #ffc400; color: #ffc400; }
+.enemy .hp { font-size: .55em; color: #ffc400; margin-bottom: 2px; }
+.enemy.hit img, .enemy.hit .fbshape { animation: flash .25s 2; }
+@keyframes flash { 50% { filter: brightness(3); } }
+.enemy.destroyed { opacity: 0; transform: scale(1.5) rotate(15deg); transition: all .2s ease-out; }
+
+/* --- boss --- */
+#boss { position: absolute; top: 56px; left: 50%; width: 230px; height: 180px; margin-left: -115px; z-index: 5; display: none; animation: sway 4s ease-in-out infinite; }
+#boss img { width: 100%; height: 100%; object-fit: contain; }
+#boss .fb { font-size: 120px; text-align: center; line-height: 180px; }
+#boss.hit { animation: sway 4s ease-in-out infinite, flash .25s 2; }
+#boss.dying { animation: dying 1.2s forwards; }
+@keyframes sway { 0%, 100% { transform: translateX(-120px); } 50% { transform: translateX(120px); } }
+@keyframes dying { to { transform: scale(2) rotate(40deg); opacity: 0; filter: brightness(4); } }
+
+/* --- vaisseau joueur --- */
+#ship { position: absolute; left: 50%; width: 90px; height: 90px; margin-left: -45px; z-index: 12; pointer-events: none; display: none; }
+#ship .body, #ship-preview .body { width: 100%; height: 100%; }
+.body img, .body svg { width: 100%; height: 100%; object-fit: contain; display: block; }
+.badge { position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%); font-size: 18px; filter: none; }
+.aura-glow .body { filter: drop-shadow(0 0 8px var(--shipglow)); }
+.aura-pulse .body { animation: auraPulse 1.4s ease-in-out infinite; }
+@keyframes auraPulse { 50% { filter: drop-shadow(0 0 16px var(--shipglow)); } 0%, 100% { filter: drop-shadow(0 0 3px var(--shipglow)); } }
+.ship-upgrade { animation: upgrade 1s; }
+@keyframes upgrade { 30% { transform: scale(1.6); filter: brightness(3); } }
+
+.explosion { position: absolute; z-index: 30; pointer-events: none; animation: boom .6s ease-out forwards; }
+.explosion img { width: 100%; height: 100%; object-fit: contain; }
+.explosion.fb { border-radius: 50%; background: radial-gradient(circle, #fff 0%, #ffe066 25%, #ff8a1f 55%, rgba(255,60,0,.6) 75%, transparent 100%); }
+.explosion.fb.blue { background: radial-gradient(circle, #fff 0%, #aef 25%, #2aa8ff 55%, rgba(0,100,255,.6) 75%, transparent 100%); }
+@keyframes boom { 0% { transform: scale(.2); opacity: 1; } 60% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.25); opacity: 0; } }
+
+.laser-beam { position: absolute; width: 5px; height: 26px; background: var(--laser); box-shadow: 0 0 15px var(--laser), 0 0 5px white; border-radius: 3px; z-index: 50; transition: top .15s linear, left .15s linear; }
+
+#controls { position: absolute; bottom: 0; left: 0; width: 100%; padding: 8px 5px; background: #000000b8; display: none; flex-wrap: wrap; justify-content: center; gap: 5px; border-top: 1px solid var(--main-color); z-index: 20; }
+.tense-button { padding: 9px 10px; font-size: .6em; cursor: pointer; border: 2px solid var(--main-color); background: #005f5f; color: #fff; border-radius: 7px; text-transform: uppercase; }
+.tense-button:hover { background: #008f8f; }
+.tense-button:active { transform: scale(.95); }
+
+@media (max-width: 520px) {
+  #planet-grid { grid-template-columns: repeat(2, 1fr); }
+  #boss { width: 180px; margin-left: -90px; height: 140px; }
+  @keyframes sway { 0%, 100% { transform: translateX(-60px); } 50% { transform: translateX(60px); } }
+}
