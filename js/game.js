@@ -95,7 +95,20 @@
     if (!on) { $('boss').style.display = 'none'; $('boss-bar-wrap').style.display = 'none'; }
   }
 
+  function speedLevel() { return SPEEDS.find(x => x.id === cos.speed) || SPEEDS[0]; }
+  const pts = n => Math.round(n * speedLevel().m);
+  function renderSpeed() {
+    const c = $('opt-speed'); c.innerHTML = '';
+    SPEEDS.forEach(sp => {
+      const d = document.createElement('div');
+      d.className = 'pill' + (sp.id === speedLevel().id ? ' on' : '');
+      d.textContent = sp.name + ' ×' + sp.m;
+      d.onclick = () => { cos.speed = sp.id; SGStore.saveCosmetics(cos); renderSpeed(); };
+      c.appendChild(d);
+    });
+  }
   function renderMap() {
+    renderSpeed();
     const grid = $('planet-grid'); grid.innerHTML = '';
     PLANETS.forEach((p, i) => {
       const locked = i > progress.unlocked, done = progress.conquered.includes(i);
@@ -139,7 +152,7 @@
   // ---------- PARTIE ----------
   function startPlanet(idx) {
     stopLoops();
-    S = { idx, wave: 0, kills: 0, lives: MAX_LIVES, score: 0, running: false, paused: true,
+    S = { idx, mult: speedLevel().m, wave: 0, kills: 0, lives: MAX_LIVES, score: 0, running: false, paused: true,
           bossHp: 0, bossMax: 0, admiralDone: false, admiralDead: false, active: [], planet: PLANETS[idx] };
     box.querySelectorAll('.enemy, .laser-beam, .explosion').forEach(e => e.remove());
     showScreen(null);
@@ -239,7 +252,7 @@
   function spawnRate() {
     const base = S.wave === 2 ? 1800 - S.idx * 90 : 2300 - S.idx * 150 - S.wave * 100;
     // un peu plus lent qu'avant : il faut le temps de se placer en face de l'ennemi
-    return Math.max(1100, base + 250);
+    return Math.max(1000, (base + 250) / (0.4 + 0.6 * speedLevel().f));
   }
   function scheduleSpawn(delay) {
     clearTimeout(spawnTimer);
@@ -286,7 +299,7 @@
 
   // largeur de la zone de jeu = conteneur moins le bac à munitions
   function playW() { const c = $('controls'); return box.clientWidth - (c.offsetWidth || 0); }
-  function speed() { return S.planet.speed + S.wave * 0.12 + (S.wave === 2 ? 0.15 : 0); }
+  function speed() { return (S.planet.speed + S.wave * 0.12 + (S.wave === 2 ? 0.15 : 0)) * speedLevel().f; }
 
   // ---------- DÉPLACEMENT : flèches (ou Q/D, A/D) + souris/doigt, utilisables en même temps ----------
   function moveShip() {
@@ -392,7 +405,7 @@
     if (!ok) { loseLife(); return; }
 
     shootLaser(target);
-    S.kills++; S.score++;
+    S.kills++; S.score += pts(1);
     const hp = parseInt(target.dataset.hp) - 1;
     if (S.wave === 2) hitBoss();
     if (hp > 0) { // amiral touché mais pas détruit
@@ -401,9 +414,9 @@
       const h = target.querySelector('.hp'); if (h) h.textContent = '❤';
       const nw = pickWord(word);
       target.querySelector('.word').textContent = nw.word; target.dataset.nature = nw.class;
-      S.score += 1;
+      S.score += pts(1);
     } else {
-      if (target.dataset.kind === 'admiral') { S.score += 2; S.admiralDead = true; }
+      if (target.dataset.kind === 'admiral') { S.score += pts(2); S.admiralDead = true; }
       setTimeout(() => {
         SFX.boom();
         const c = centerOf(target), k = target.dataset.kind;
@@ -429,7 +442,7 @@
 
   function waveCleared() {
     S.wave++;
-    S.score += 3;
+    S.score += pts(3);
     beginWave();
   }
 
@@ -450,7 +463,7 @@
       setTimeout(() => explode(bc.x + (Math.random() - .5) * bc.w * .7, bc.y + (Math.random() - .5) * bc.h * .6, 150 + Math.random() * 80, 'expl_big'), i * 180);
     }
     $('boss').classList.add('dying');
-    S.score += 10;
+    S.score += pts(10);
     box.querySelectorAll('.enemy').forEach(e => e.classList.add('destroyed'));
     const idx = S.idx;
     if (!progress.conquered.includes(idx)) progress.conquered.push(idx);
@@ -487,7 +500,7 @@
 
   function updateHud() {
     if (!S) return;
-    $('i-score').textContent = 'Score : ' + S.score;
+    $('i-score').textContent = 'Score : ' + S.score + (S.mult > 1 ? ' (×' + S.mult + ')' : '');
     $('i-planet').textContent = 'Planète ' + S.planet.id;
     $('i-wave').textContent = S.wave === 2 ? 'BOSS' : 'Vague ' + (S.wave + 1) + '/3';
     $('i-lives').textContent = 'Vies : ' + (cheat.infiniteLives ? '∞' : S.lives);

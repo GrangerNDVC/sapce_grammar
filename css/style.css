@@ -1,9 +1,9 @@
 :root { --bay: 150px; --main-color: #00e6e6; --accent-color: #ff00ff; --dark-bg: #0c0a18; --laser: #ffc400; }
 * { box-sizing: border-box; }
-body { font-family: 'Press Start 2P', cursive, Arial, sans-serif; background-color: var(--dark-bg); color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; padding: 6px; }
-button { font-family: inherit; }
+body { font-family: 'Press Start 2P', cursive, Arial, sans-serif; background-color: var(--dark-bg); color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; height: 100dvh; margin: 0; overflow: hidden; padding: 6px; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+button { font-family: inherit; touch-action: manipulation; }
 
-#game-container { touch-action: none; user-select: none; -webkit-user-select: none; width: 100%; max-width: 800px; height: 98vh; max-height: 760px; background: #05030c; border: 3px solid var(--main-color); box-shadow: 0 0 20px var(--main-color); border-radius: 10px; position: relative; overflow: hidden; }
+#game-container { touch-action: none; user-select: none; -webkit-user-select: none; width: 100%; max-width: 800px; height: 98vh; height: calc(100dvh - 12px); max-height: 900px; background: #05030c; border: 3px solid var(--main-color); box-shadow: 0 0 20px var(--main-color); border-radius: 10px; position: relative; overflow: hidden; }
 #bg { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 0; }
 #bg::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.55) 100%); }
 #stars { position: absolute; inset: 0; z-index: 1; opacity: .6; background-image:
@@ -165,3 +165,10 @@ button { font-family: inherit; }
 .sc-row .pl { color: #7fd; font-size: .85em; }
 .sc-row .pt { font-weight: bold; color: #fff; }
 .sc-row.me { border: 2px solid #ffc400; }
+
+#speed-pick { margin-bottom: 12px; }
+.sp-label { font-family: Arial, sans-serif; font-size: .8em; color: #9fb; margin-bottom: 6px; }
+#speed-pick .pill { font-family: Arial, sans-serif; font-weight: bold; font-size: .85em; }
+#speed-pick .swatches { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+@media (min-width: 700px) { :root { --bay: 170px; } .tense-button { font-size: 14px; min-height: 46px; } }
+@media (hover: none) { .bay-hint { display: none; } }

@@ -33,7 +33,7 @@ const SGStore = {
   loadCosmetics() {
     let c = this._get(this._k('cosmetics'), null);
     if (c === null && this.profile === 'local') c = this._get('sg_cosmetics', null);
-    return Object.assign({ hue: 0, laser: "#ffc400", badge: "", aura: "glow", auraColor: "auto", black: false }, c || {});
+    return Object.assign({ hue: 0, laser: "#ffc400", badge: "", aura: "glow", auraColor: "auto", black: false, speed: "cadet" }, c || {});
   },
   saveCosmetics(c) { this._set(this._k('cosmetics'), c); this._touch(); SGHooks.onEvent('cosmetics_saved', c); },
 

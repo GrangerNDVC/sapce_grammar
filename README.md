@@ -67,3 +67,7 @@ Déposer des MP3 dans `assets/music/` : title, map, planet_1…planet_6, boss, b
 
 ### Tableau des scores (ajouté)
 Bouton 🏆 SCORES dans le menu : top 10 (meilleur score + planètes conquises). Les élèves apparaissent sous un **pseudo anonyme** généré depuis leur code (ex. « Loup Agile 70 ») : le code n'est jamais affiché. Données dans `jeux/natures_scores/<code>` (règles ajoutées dans `firebase/database.rules.json` : lecture pour tout utilisateur connecté, écriture limitée à un code à 4 chiffres, score < 100000, planètes ≤ 6).
+
+### Vitesse et tablettes (06/11/2026)
+- Sur la carte : choix de la vitesse des ennemis, avec multiplicateur de points : 🐢 Cadet ×1 (par défaut) · 🚀 Pilote ×1,5 · ⚡ Commandant ×2 · 🔥 Légende ×3. Le choix est sauvegardé avec le profil.
+- iPad / smartphone : commandes tactiles (glisser le doigt pour placer le vaisseau, toucher une munition pour tirer, les deux en même temps), écran adapté (dvh), volume de la musique géré par Web Audio (iOS ignore le volume des balises audio). Le son démarre au premier toucher (règle iOS).

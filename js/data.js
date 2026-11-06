@@ -97,6 +97,11 @@ const LASER_COLORS = ["#ffc400", "#ff3b3b", "#39ff14", "#00e6e6", "#ff00ff", "#f
 const BADGES = ["", "💀", "⭐", "🔥", "⚡", "🐉", "🦊", "💎", "🚀"];
 // Couleur de l'aura (lueur / pulsation) : "auto" = comme le vaisseau
 const AURA_COLORS = ["auto", "#00e6e6", "#4d7cff", "#b266ff", "#ff4fd8", "#ff3b3b", "#ff9a1f", "#ffe94d", "#39ff14", "#ffffff", "#000000"];
+// Vitesse de jeu : f = facteur de vitesse des ennemis, m = multiplicateur de points
+const SPEEDS = [
+  { id: "cadet", name: "🐢 Cadet", f: 0.6, m: 1 }, { id: "pilote", name: "🚀 Pilote", f: 0.8, m: 1.5 },
+  { id: "commandant", name: "⚡ Commandant", f: 1, m: 2 }, { id: "legende", name: "🔥 Légende", f: 1.3, m: 3 }
+];
 const AURAS = [
   { id: "none", name: "Aucune" }, { id: "glow", name: "Lueur" }, { id: "pulse", name: "Pulsation" }
 ];
