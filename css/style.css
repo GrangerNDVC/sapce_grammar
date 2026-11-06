@@ -156,3 +156,12 @@ button { font-family: inherit; }
   #boss { width: 150px; margin-left: -75px; height: 120px; }
   @keyframes sway { 0%, 100% { transform: translateX(-45px); } 50% { transform: translateX(45px); } }
 }
+
+/* --- tableau des scores --- */
+#score-list { width: 100%; max-width: 440px; margin-bottom: 14px; font-family: Arial, sans-serif; text-align: left; }
+.sc-row { display: flex; gap: 10px; align-items: center; padding: 7px 10px; margin: 4px 0; background: #12183a; border-radius: 8px; font-size: .95em; }
+.sc-row .rk { width: 28px; color: #ffc400; font-weight: bold; }
+.sc-row .nm { flex: 1; }
+.sc-row .pl { color: #7fd; font-size: .85em; }
+.sc-row .pt { font-weight: bold; color: #fff; }
+.sc-row.me { border: 2px solid #ffc400; }

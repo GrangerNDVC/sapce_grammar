@@ -12,3 +12,4 @@ const SG_FIREBASE_CONFIG = {
 };
 const SG_TEACHER_EMAIL = "julie.granger.rennes@gmail.com"; // doit être identique à l'email des règles
 const SG_DB_PATH = "jeux/natures";                           // nœud de la base (voir règles)
+const SG_SCORES_PATH = "jeux/natures_scores";       // tableau des scores (pseudos anonymes)

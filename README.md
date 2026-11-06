@@ -64,3 +64,6 @@ Couleur du vaisseau (dont **noir**), du laser (dont noir), emblème (dont 💀),
 
 ### Musiques (facultatives)
 Déposer des MP3 dans `assets/music/` : title, map, planet_1…planet_6, boss, boss_final, victory, gameover (prompts dans le générateur, catégorie Musiques). Fichier absent = silence. Bouton 🔊/🔇 en haut à gauche.
+
+### Tableau des scores (ajouté)
+Bouton 🏆 SCORES dans le menu : top 10 (meilleur score + planètes conquises). Les élèves apparaissent sous un **pseudo anonyme** généré depuis leur code (ex. « Loup Agile 70 ») : le code n'est jamais affiché. Données dans `jeux/natures_scores/<code>` (règles ajoutées dans `firebase/database.rules.json` : lecture pour tout utilisateur connecté, écriture limitée à un code à 4 chiffres, score < 100000, planètes ≤ 6).

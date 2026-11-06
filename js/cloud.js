@@ -63,10 +63,19 @@ const SGCloud = (() => {
                                     ok: st.stats.ok, ko: st.stats.ko, t: st.stats.last });
     return { v: 1, maj, donnees, resume };
   }
+  // Pseudo amusant et anonyme dérivé du code (le code lui-même n'est jamais affiché aux autres)
+  const ADJ = ['Rapide', 'Brave', 'Cosmique', 'Malin', 'Stellaire', 'Rusé', 'Agile', 'Noble', 'Galactique', 'Fougueux', 'Lumineux', 'Intrépide'];
+  const NOM = ['Faucon', 'Comète', 'Dragon', 'Phénix', 'Lynx', 'Aigle', 'Nébuleuse', 'Pilote', 'Renard', 'Météore', 'Loup', 'Astéroïde'];
+  function pseudo(c) { const n = parseInt(c, 10) || 0; return NOM[n % 12] + ' ' + ADJ[Math.floor(n / 12) % 12] + ' ' + (n % 97); }
+  function scorePayload() {
+    const p = SGStore.loadProgress();
+    return { v: 1, maj: Date.now(), nom: pseudo(code), score: Math.min(99999, num(p.best)), planetes: Math.min(6, p.conquered.length) };
+  }
   async function push() {
     pending = false; clearTimeout(pushTimer);
     if (!db || !code || teacher || SGStore.profile !== code) return;
-    try { await withTimeout(ensureAnon()); await withTimeout(db.ref(path(code)).set(payload())); }
+    try { await withTimeout(ensureAnon()); await withTimeout(db.ref(path(code)).set(payload()));
+      await withTimeout(db.ref(SG_SCORES_PATH + '/' + code).set(scorePayload())); }
     catch (e) { pending = true; console.warn('Envoi différé', e.message); }
   }
   function schedulePush(delay) {
@@ -113,6 +122,29 @@ const SGCloud = (() => {
 
   function playLocal() {
     code = null; SGStore.setProfile('local'); SGGame.reloadProfile(); showMenu('rien n\'est sauvegardé en ligne');
+  }
+
+  // ---------- Tableau des scores ----------
+  async function showScores() {
+    const box = $('score-list'); box.textContent = ''; SGGame.show('score-screen');
+    if (!db) { box.appendChild(h('p', 'Le tableau des scores demande une connexion.')); return; }
+    box.appendChild(h('p', 'Chargement…'));
+    try {
+      await withTimeout(ensureAnon());
+      const v = (await withTimeout(db.ref(SG_SCORES_PATH).once('value'))).val() || {};
+      const me = code ? pseudo(code) : null;
+      const rows = Object.values(v).filter(r => r && typeof r === 'object')
+        .map(r => ({ nom: String(r.nom || '?').slice(0, 40), score: num(r.score), pl: num(r.planetes) }))
+        .sort((a, b) => b.score - a.score).slice(0, 10);
+      box.textContent = '';
+      if (!rows.length) box.appendChild(h('p', 'Personne n\'a encore de score. Sois le premier !'));
+      rows.forEach((r, i) => {
+        const line = h('div', null, 'sc-row' + (r.nom === me ? ' me' : ''));
+        line.appendChild(h('span', i + 1, 'rk')); line.appendChild(h('span', r.nom, 'nm'));
+        line.appendChild(h('span', r.pl + '/6 🪐', 'pl')); line.appendChild(h('span', r.score, 'pt'));
+        box.appendChild(line);
+      });
+    } catch (e) { box.textContent = ''; box.appendChild(h('p', 'Impossible de charger les scores (hors ligne ?).')); }
   }
 
   // ---------- Statistiques (alimentées par les événements du jeu) ----------
@@ -275,6 +307,8 @@ const SGCloud = (() => {
   $('btn-login').onclick = () => login($('code-input').value, false);
   $('btn-nocode').onclick = playLocal;
   $('btn-logout').onclick = logout;
+  $('btn-scores').onclick = showScores;
+  $('btn-score-back').onclick = () => SGGame.show('title-screen');
   $('btn-teacher').onclick = teacherLogin;
   $('t-refresh').onclick = loadStudents;
   $('t-csv').onclick = exportCSV;
