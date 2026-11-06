@@ -29,3 +29,8 @@ Planètes, vagues, amiral, boss, vaisseau évolutif, personnalisation, sons, sau
 
 ## Chantier 6 – Finitions (optionnel)
 Bonus / power-ups, musique, mode révision des erreurs, classement de classe.
+
+## Avancement 06/11/2026
+- Chantier Firebase : code livré (cloud.js, règles). À activer dans la console (voir README) puis tester avec de vrais appareils.
+- Déplacement latéral + bac à munitions : fait.
+- Musiques : prompts livrés, fichiers à générer.

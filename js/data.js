@@ -91,10 +91,12 @@ const ASSET_PATHS = {
 // Options de personnalisation
 const SHIP_HUES = [ // rotation de teinte depuis le cyan de base
   { name: "Cyan", deg: 0 }, { name: "Bleu", deg: 40 }, { name: "Violet", deg: 100 }, { name: "Rose", deg: 140 },
-  { name: "Rouge", deg: 180 }, { name: "Orange", deg: -150 }, { name: "Jaune", deg: -125 }, { name: "Vert", deg: -60 }
+  { name: "Rouge", deg: 180 }, { name: "Orange", deg: -150 }, { name: "Jaune", deg: -125 }, { name: "Vert", deg: -60 }, { name: "Noir", black: true, deg: 0 }
 ];
-const LASER_COLORS = ["#ffc400", "#ff3b3b", "#39ff14", "#00e6e6", "#ff00ff", "#ffffff"];
-const BADGES = ["", "⭐", "🔥", "⚡", "🐉", "🦊", "💎", "🚀"];
+const LASER_COLORS = ["#ffc400", "#ff3b3b", "#39ff14", "#00e6e6", "#ff00ff", "#ffffff", "#000000"];
+const BADGES = ["", "💀", "⭐", "🔥", "⚡", "🐉", "🦊", "💎", "🚀"];
+// Couleur de l'aura (lueur / pulsation) : "auto" = comme le vaisseau
+const AURA_COLORS = ["auto", "#00e6e6", "#4d7cff", "#b266ff", "#ff4fd8", "#ff3b3b", "#ff9a1f", "#ffe94d", "#39ff14", "#ffffff", "#000000"];
 const AURAS = [
   { id: "none", name: "Aucune" }, { id: "glow", name: "Lueur" }, { id: "pulse", name: "Pulsation" }
 ];

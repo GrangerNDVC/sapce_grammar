@@ -42,3 +42,25 @@ Remarque : `bg_1.jpg` (Rubicon) montre encore un paysage de canyons au sol ; à 
 - Erreur de nature ou vaisseau qui passe = −1 vie (10 vies par planète).
 - Touches 1 à 6 du clavier = boutons.
 - Vaisseau : niveau = numéro de planète (max 5). Tirs doubles dès le niveau 3, triples au niveau 5.
+
+---
+## Mise à jour 06/11/2026 — commandes, Firebase, musiques
+
+### Commandes
+- **← →** (ou Q/D) et/ou **souris / doigt** : déplacer le vaisseau (les deux marchent en même temps).
+- **↑ ↓** (ou Z/S) : choisir la munition dans le **bac à munitions** (à droite). **Espace / Entrée** : tirer. Cliquer/toucher une munition tire aussi ; les chiffres 1-6 sont des raccourcis.
+- On ne touche un ennemi que s'il est **en face** du vaisseau (surligné en jaune). Hors alignement : le tir part dans le vide, aucune vie perdue.
+
+### Personnalisation
+Couleur du vaisseau (dont **noir**), du laser (dont noir), emblème (dont 💀), effet (aucun/lueur/pulsation) **et sa propre palette de couleur**.
+
+### Firebase (à faire une seule fois)
+1. Console Firebase > Authentication > Sign-in method : activer **Anonyme** et **Google**.
+2. Authentication > Settings > Authorized domains : ajouter le domaine Netlify du jeu.
+3. Realtime Database > Rules : coller le contenu de `firebase/database.rules.json` (il contient tes règles existantes + le nœud `natures`) puis Publier.
+4. Le jeu écrit dans `jeux/natures/<code à 4 chiffres>`. Espace enseignant : bouton ⚙ discret (en bas à droite de l'écran titre), connexion Google avec julie.granger.rennes@gmail.com.
+- Limite connue : un code à 4 chiffres n'est pas un mot de passe (un élève peut taper le code d'un camarade). Suffisant pour du suivi pédagogique, pas pour des données sensibles : ne stocke que la progression et les stats.
+- Sans réseau/Firebase bloqué : le jeu marche, la progression reste sur l'appareil et se synchronise plus tard.
+
+### Musiques (facultatives)
+Déposer des MP3 dans `assets/music/` : title, map, planet_1…planet_6, boss, boss_final, victory, gameover (prompts dans le générateur, catégorie Musiques). Fichier absent = silence. Bouton 🔊/🔇 en haut à gauche.

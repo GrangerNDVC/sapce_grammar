@@ -1,9 +1,9 @@
-:root { --main-color: #00e6e6; --accent-color: #ff00ff; --dark-bg: #0c0a18; --laser: #ffc400; }
+:root { --bay: 150px; --main-color: #00e6e6; --accent-color: #ff00ff; --dark-bg: #0c0a18; --laser: #ffc400; }
 * { box-sizing: border-box; }
 body { font-family: 'Press Start 2P', cursive, Arial, sans-serif; background-color: var(--dark-bg); color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; padding: 6px; }
 button { font-family: inherit; }
 
-#game-container { width: 100%; max-width: 800px; height: 98vh; max-height: 760px; background: #05030c; border: 3px solid var(--main-color); box-shadow: 0 0 20px var(--main-color); border-radius: 10px; position: relative; overflow: hidden; }
+#game-container { touch-action: none; user-select: none; -webkit-user-select: none; width: 100%; max-width: 800px; height: 98vh; max-height: 760px; background: #05030c; border: 3px solid var(--main-color); box-shadow: 0 0 20px var(--main-color); border-radius: 10px; position: relative; overflow: hidden; }
 #bg { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 0; }
 #bg::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.55) 100%); }
 #stars { position: absolute; inset: 0; z-index: 1; opacity: .6; background-image:
@@ -47,7 +47,7 @@ button { font-family: inherit; }
 
 /* --- barre d'info --- */
 #info-bar { display: flex; justify-content: space-between; gap: 6px; width: 100%; padding: 7px 10px; background: #000000b0; position: absolute; top: 0; left: 0; z-index: 20; border-bottom: 1px solid var(--main-color); font-size: .55em; line-height: 1.5; }
-#boss-bar-wrap { position: absolute; top: 34px; left: 50%; transform: translateX(-50%); width: 70%; z-index: 20; display: none; text-align: center; font-size: .5em; }
+#boss-bar-wrap { position: absolute; top: 34px; left: calc((100% - var(--bay)) / 2); transform: translateX(-50%); width: 70%; z-index: 20; display: none; text-align: center; font-size: .5em; }
 #boss-bar { height: 12px; background: #3a0a2a; border: 2px solid #fff; border-radius: 8px; overflow: hidden; margin-top: 4px; }
 #boss-bar-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #ff3b3b, #ffc400); transition: width .25s; }
 #banner { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); z-index: 45; color: #ffc400; font-size: 1.2em; text-align: center; line-height: 1.6; text-shadow: 0 0 15px #000, 0 0 6px #000; pointer-events: none; opacity: 0; transition: opacity .4s; width: 90%; }
@@ -61,10 +61,12 @@ button { font-family: inherit; }
 .enemy .hp { font-size: .55em; color: #ffc400; margin-bottom: 2px; }
 .enemy.hit img, .enemy.hit .fbshape { animation: flash .25s 2; }
 @keyframes flash { 50% { filter: brightness(3); } }
+.enemy.locked img, .enemy.locked .fbshape { filter: drop-shadow(0 0 10px #ffc400); }
+.enemy.locked .word { border-color: #ffc400; box-shadow: 0 0 10px #ffc40099; }
 .enemy.destroyed { opacity: 0; transform: scale(1.5) rotate(15deg); transition: all .2s ease-out; }
 
 /* --- boss --- */
-#boss { position: absolute; top: 56px; left: 50%; width: 230px; height: 180px; margin-left: -115px; z-index: 5; display: none; animation: sway 4s ease-in-out infinite; }
+#boss { position: absolute; top: 56px; left: calc((100% - var(--bay)) / 2); width: 230px; height: 180px; margin-left: -115px; z-index: 5; display: none; animation: sway 4s ease-in-out infinite; }
 #boss img { width: 100%; height: 100%; object-fit: contain; }
 #boss .fb { font-size: 120px; text-align: center; line-height: 180px; }
 #boss.hit { animation: sway 4s ease-in-out infinite, flash .25s 2; }
@@ -73,13 +75,16 @@ button { font-family: inherit; }
 @keyframes dying { to { transform: scale(2) rotate(40deg); opacity: 0; filter: brightness(4); } }
 
 /* --- vaisseau joueur --- */
-#ship { position: absolute; left: 50%; width: 90px; height: 90px; margin-left: -45px; z-index: 12; pointer-events: none; display: none; }
+#ship { --ship-size: 90px; position: absolute; left: 50%; bottom: 14px; width: 90px; height: 90px; margin-left: -45px; z-index: 12; pointer-events: none; display: none; }
+#ship-preview { --ship-size: 110px; }
 #ship .body, #ship-preview .body { width: 100%; height: 100%; }
-.body img, .body svg { width: 100%; height: 100%; object-fit: contain; display: block; }
-.badge { position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%); font-size: 18px; filter: none; }
-.aura-glow .body { filter: drop-shadow(0 0 8px var(--shipglow)); }
+.tint { width: 100%; height: 100%; }
+.tint img, .tint svg { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* emblème : petit, posé sur le fuselage */
+.badge { position: absolute; left: 50%; top: 62%; transform: translate(-50%, -50%); font-size: calc(var(--ship-size) * .15); line-height: 1; filter: drop-shadow(0 0 2px rgba(0,0,0,.85)); pointer-events: none; }
+.aura-glow .body { filter: drop-shadow(0 0 8px var(--shipglow)) drop-shadow(0 0 3px var(--shipglow)); }
 .aura-pulse .body { animation: auraPulse 1.4s ease-in-out infinite; }
-@keyframes auraPulse { 50% { filter: drop-shadow(0 0 16px var(--shipglow)); } 0%, 100% { filter: drop-shadow(0 0 3px var(--shipglow)); } }
+@keyframes auraPulse { 50% { filter: drop-shadow(0 0 16px var(--shipglow)) drop-shadow(0 0 6px var(--shipglow)); } 0%, 100% { filter: drop-shadow(0 0 3px var(--shipglow)); } }
 .ship-upgrade { animation: upgrade 1s; }
 @keyframes upgrade { 30% { transform: scale(1.6); filter: brightness(3); } }
 
@@ -89,15 +94,65 @@ button { font-family: inherit; }
 .explosion.fb.blue { background: radial-gradient(circle, #fff 0%, #aef 25%, #2aa8ff 55%, rgba(0,100,255,.6) 75%, transparent 100%); }
 @keyframes boom { 0% { transform: scale(.2); opacity: 1; } 60% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.25); opacity: 0; } }
 
-.laser-beam { position: absolute; width: 5px; height: 26px; background: var(--laser); box-shadow: 0 0 15px var(--laser), 0 0 5px white; border-radius: 3px; z-index: 50; transition: top .15s linear, left .15s linear; }
+.laser-beam { position: absolute; width: 5px; height: 26px; background: var(--laser); box-shadow: 0 0 12px var(--laser), 0 0 4px #fff, 0 0 0 1px rgba(255,255,255,.35); border-radius: 3px; z-index: 50; transition: top .15s linear, left .15s linear; }
 
-#controls { position: absolute; bottom: 0; left: 0; width: 100%; padding: 8px 5px; background: #000000b8; display: none; flex-wrap: wrap; justify-content: center; gap: 5px; border-top: 1px solid var(--main-color); z-index: 20; }
-.tense-button { padding: 9px 10px; font-size: .6em; cursor: pointer; border: 2px solid var(--main-color); background: #005f5f; color: #fff; border-radius: 7px; text-transform: uppercase; }
-.tense-button:hover { background: #008f8f; }
-.tense-button:active { transform: scale(.95); }
+/* --- bac à munitions --- */
+#controls { position: absolute; top: 40px; right: 0; bottom: 0; width: var(--bay); padding: 8px 6px; background: linear-gradient(90deg, #000000a0, #000000d0); display: none; flex-direction: column; justify-content: center; gap: 6px; border-left: 2px solid var(--main-color); box-shadow: -4px 0 14px #00e6e633; z-index: 20; }
+.bay-title { font-size: .5em; color: #ffc400; text-align: center; letter-spacing: 1px; margin-bottom: 2px; }
+.bay-hint { font-family: Arial, sans-serif; font-size: 10px; line-height: 1.4; color: #9fb; text-align: center; opacity: .8; margin-top: 4px; }
+.tense-button { display: flex; align-items: center; gap: 6px; width: 100%; padding: 8px 6px; min-height: 40px; font-family: Arial, sans-serif; font-weight: bold; font-size: 12px; line-height: 1.15; text-align: left; cursor: pointer; border: 2px solid #1f6f6f; background: #0a2f33; color: #cfe; border-radius: 7px; transition: transform .08s, background .1s; }
+.tense-button .k { flex: none; width: 16px; height: 16px; line-height: 16px; text-align: center; font-size: 10px; border-radius: 4px; background: #00000080; color: #7fd; }
+.tense-button.sel { border-color: #ffc400; background: #5a4300; color: #fff; box-shadow: 0 0 12px #ffc40099, inset 0 0 8px #ffc40055; transform: translateX(-6px); }
+.tense-button.sel::before { content: "▶"; position: absolute; left: -2px; color: #ffc400; font-size: 10px; }
+.tense-button { position: relative; }
+.tense-button.fired { background: #b88700; }
+.tense-button:active { transform: translateX(-6px) scale(.97); }
+
+#btn-mute { position: absolute; top: 38px; left: 8px; z-index: 60; background: #000a; border: 1px solid #ffffff44; border-radius: 8px; color: #fff; font-size: 16px; padding: 2px 6px; cursor: pointer; }
+#cheatbar { position: absolute; top: 34px; right: calc(var(--bay) + 6px); z-index: 30; display: none; gap: 4px; }
+#cheatbar button { background: #000a; border: 1px solid #ffffff44; color: #fff; border-radius: 6px; font-size: 13px; padding: 2px 6px; cursor: pointer; opacity: .6; }
+#cheatbar button:hover { opacity: 1; }
+
+/* --- connexion élève --- */
+.howto { font-size: .8em !important; opacity: .85; }
+#login-box, #menu-box { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+#login-box label { font-family: Arial, sans-serif; font-size: .9em; }
+#code-input { width: 7.5em; text-align: center; font-family: inherit; font-size: 1.4em; letter-spacing: .3em; padding: 6px 4px 6px 10px; border-radius: 8px; border: 2px solid var(--main-color); background: #000a; color: #fff; }
+#login-msg { min-height: 1.2em; font-family: Arial, sans-serif; font-size: .85em; color: #ffc400; }
+#who { font-family: Arial, sans-serif; font-size: .95em; color: #7fd; }
+.linklike { background: none; border: none; color: #9ab; font-family: Arial, sans-serif; font-size: .8em; text-decoration: underline; cursor: pointer; }
+#btn-teacher { position: absolute; right: 8px; bottom: 6px; background: none; border: none; color: #fff; opacity: .12; font-size: 16px; cursor: pointer; }
+#btn-teacher:hover { opacity: .5; }
+
+/* --- espace enseignant --- */
+#teacher-screen { padding-top: 44px; justify-content: flex-start; align-items: stretch; text-align: left; font-family: Arial, sans-serif; }
+.t-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+.t-head h2 { margin: 0; font-size: 1em; }
+.t-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn.sm { padding: 6px 10px; font-size: .55em; }
+.t-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+.t-tabs button { font-family: Arial, sans-serif; background: #12183a; color: #cde; border: 1px solid #335; border-radius: 6px 6px 0 0; padding: 6px 12px; cursor: pointer; }
+.t-tabs button.on { background: #1d2a66; color: #fff; border-color: #ffc400; }
+#t-status { font-size: .8em; color: #ffc400; margin-bottom: 6px; min-height: 1.2em; }
+.t-table { width: 100%; border-collapse: collapse; font-size: .8em; }
+.t-table th, .t-table td { padding: 5px 6px; border-bottom: 1px solid #234; text-align: left; }
+.t-table th { color: #7fd; font-weight: normal; }
+.t-table tbody tr { cursor: pointer; }
+.t-table tbody tr:hover { background: #1d2a6666; }
+.t-bar-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; font-size: .8em; }
+.t-bar-row .lab { display: inline-block; width: 150px; flex: none; }
+.t-bar { flex: 1; height: 10px; background: #1a1f40; border-radius: 5px; overflow: hidden; }
+.t-fill { height: 100%; }
+.t-fill.good { background: #39ff14; } .t-fill.mid { background: #ffc400; } .t-fill.bad { background: #ff3b3b; }
+#t-detail { margin-top: 12px; font-size: .85em; }
+#t-detail h3 { color: #ffc400; font-size: 1em; margin: 10px 0 4px; }
+.t-tools { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin: 8px 0; font-size: .9em; }
 
 @media (max-width: 520px) {
+  :root { --bay: 118px; }
+  .tense-button { font-size: 11px; padding: 6px 4px; min-height: 38px; }
+  .tense-button .k { display: none; }
   #planet-grid { grid-template-columns: repeat(2, 1fr); }
-  #boss { width: 180px; margin-left: -90px; height: 140px; }
-  @keyframes sway { 0%, 100% { transform: translateX(-60px); } 50% { transform: translateX(60px); } }
+  #boss { width: 150px; margin-left: -75px; height: 120px; }
+  @keyframes sway { 0%, 100% { transform: translateX(-45px); } 50% { transform: translateX(45px); } }
 }

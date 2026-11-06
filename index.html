@@ -12,12 +12,28 @@
     <div id="bg"></div>
     <div id="stars"></div>
 
-    <!-- Écran titre -->
+    <!-- Écran titre + connexion élève -->
     <div id="title-screen" class="overlay show">
       <h1>L'IDENTIFICATEUR<br>DE L'ESPACE</h1>
       <p>Conquiers 6 planètes ! Détruis les vaisseaux ennemis en choisissant la bonne <b>nature du mot</b>. Bats l'amiral, puis le boss de chaque planète. Ton vaisseau évolue à chaque victoire. Tu as 10 vies par planète.</p>
-      <button class="btn" id="btn-play">JOUER</button>
-      <button class="btn alt" id="btn-custom">MON VAISSEAU</button>
+      <p class="howto">← → ou souris / doigt : place-toi <b>en face</b> d'un ennemi · ↑ ↓ : choisis ta munition dans le bac · <b>Espace</b> : tire (ou clique sur la munition)</p>
+
+      <div id="login-box">
+        <label for="code-input">Ton code élève (4 chiffres)</label>
+        <input id="code-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="0000">
+        <button class="btn" id="btn-login">VALIDER</button>
+        <div id="login-msg"></div>
+        <button class="linklike" id="btn-nocode">Jouer sans code (rien n'est sauvegardé en ligne)</button>
+      </div>
+
+      <div id="menu-box" style="display:none">
+        <div id="who"></div>
+        <button class="btn" id="btn-play">JOUER</button>
+        <button class="btn alt" id="btn-custom">MON VAISSEAU</button>
+        <button class="linklike" id="btn-logout">Changer d'élève</button>
+      </div>
+
+      <button id="btn-teacher" aria-label="Espace enseignant">⚙</button>
     </div>
 
     <!-- Carte des planètes -->
@@ -31,10 +47,11 @@
     <div id="custom-screen" class="overlay">
       <h2>MON VAISSEAU</h2>
       <div id="ship-preview"></div>
-      <div class="opt-row"><span>Couleur du vaisseau</span><div class="swatches" id="opt-hue"></div></div>
-      <div class="opt-row"><span>Couleur du laser</span><div class="swatches" id="opt-laser"></div></div>
+      <div class="opt-row"><span>Couleur du VAISSEAU</span><div class="swatches" id="opt-hue"></div></div>
+      <div class="opt-row"><span>Couleur du LASER</span><div class="swatches" id="opt-laser"></div></div>
       <div class="opt-row"><span>Emblème</span><div class="swatches" id="opt-badge"></div></div>
-      <div class="opt-row"><span>Aura</span><div class="swatches" id="opt-aura"></div></div>
+      <div class="opt-row"><span>Effet autour du vaisseau</span><div class="swatches" id="opt-aura"></div></div>
+      <div class="opt-row"><span>Couleur de l'effet (lueur / pulsation)</span><div class="swatches" id="opt-auracolor"></div></div>
       <button class="btn" id="btn-custom-ok">VALIDER</button>
     </div>
 
@@ -54,6 +71,38 @@
       <button class="btn dark" id="btn-over-map">CARTE</button>
     </div>
 
+    <!-- Espace enseignant -->
+    <div id="teacher-screen" class="overlay">
+      <div class="t-head">
+        <h2>ESPACE ENSEIGNANT</h2>
+        <div class="t-actions">
+          <button class="btn dark sm" id="t-refresh">↻ Actualiser</button>
+          <button class="btn dark sm" id="t-csv">⬇ CSV</button>
+          <button class="btn alt sm" id="t-play">🎮 Tester le jeu</button>
+          <button class="btn dark sm" id="t-out">Quitter</button>
+        </div>
+      </div>
+      <div class="t-tabs">
+        <button id="tab-eleves" class="on">Élèves</button>
+        <button id="tab-outils">Outils de test</button>
+      </div>
+      <div id="t-eleves">
+        <div id="t-status"></div>
+        <div id="t-list"></div>
+        <div id="t-detail"></div>
+      </div>
+      <div id="t-outils" style="display:none">
+        <p>Ces réglages s'appliquent à ton profil de test (jamais envoyé aux élèves ni compté dans les statistiques).</p>
+        <div class="t-tools">
+          <button class="btn dark sm" id="tool-unlock">🔓 Débloquer toutes les planètes</button>
+          <button class="btn dark sm" id="tool-reset">♻ Réinitialiser mon profil de test</button>
+          <label><input type="checkbox" id="tool-inf"> Vies infinies</label>
+          <label><input type="checkbox" id="tool-boss1"> Boss : 1 seul coup</label>
+        </div>
+        <p>En jeu, une mini-barre apparaît en haut à droite : ⏭ vague suivante · ☠ tuer le boss · ♥ vies pleines · 🗺 retour à la carte.</p>
+      </div>
+    </div>
+
     <!-- Jeu -->
     <div id="info-bar">
       <span id="i-score">Score : 0</span>
@@ -61,16 +110,31 @@
       <span id="i-wave">Vague 1/3</span>
       <span id="i-lives">Vies : 10</span>
     </div>
+    <div id="cheatbar">
+      <button id="ch-skip" title="Vague suivante">⏭</button>
+      <button id="ch-boss" title="Tuer le boss">☠</button>
+      <button id="ch-lives" title="Vies pleines">♥</button>
+      <button id="ch-map" title="Retour à la carte">🗺</button>
+    </div>
     <div id="boss-bar-wrap"><span id="boss-name"></span><div id="boss-bar"><div id="boss-bar-fill"></div></div></div>
     <div id="banner"></div>
     <div id="boss"></div>
     <div id="ship"></div>
     <div id="controls"></div>
+    <button id="btn-mute" aria-label="Son">🔊</button>
   </div>
+
+  <!-- Firebase (si le réseau de l'école le bloque, le jeu fonctionne en local) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
   <script src="js/data.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/sfx.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/music.js"></script>
   <script src="js/game.js"></script>
+  <script src="js/cloud.js"></script>
 </body>
 </html>

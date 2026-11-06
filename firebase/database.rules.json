@@ -1,0 +1,82 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "cards": {
+      ".read": "auth != null",
+      "$id": {
+        ".write": "auth != null && (auth.token.email === 'julie.granger.rennes@gmail.com' || (newData.exists() && newData.hasChildren(['auteur','classe','titre','entree','texte','statut']) && newData.child('statut').val() === 'attente' && newData.child('titre').val().length < 100 && newData.child('texte').val().length < 5000 && newData.child('auteur').val().length < 60 && (!newData.hasChild('illustration') || newData.child('illustration').val().length < 1500000) && ((!data.exists() && !newData.hasChild('numero')) || (data.exists() && newData.child('auteur').val() === data.child('auteur').val() && newData.child('numero').val() === data.child('numero').val()))))"
+      }
+    },
+
+    "jeux": {
+      "foot": {
+        ".read": "auth != null && auth.token.email === 'julie.granger.rennes@gmail.com'",
+        "$numero": {
+          ".read": "auth != null",
+          ".write": "auth != null && (auth.token.email === 'julie.granger.rennes@gmail.com' || ($numero.matches(/^[0-9]{4}$/) && newData.exists()))",
+          ".validate": "newData.hasChildren(['maj', 'donnees'])",
+          "maj": { ".validate": "newData.isNumber() && newData.val() <= now" },
+          "donnees": { ".validate": "newData.isString() && newData.val().length < 60000" },
+          "v": { ".validate": "newData.isNumber()" },
+          "$autre": { ".validate": false }
+        }
+      },
+
+      "plume": {
+        ".read": "auth != null && auth.token.email === 'julie.granger.rennes@gmail.com'",
+        "$numero": {
+          ".read": "auth != null && $numero.matches(/^[0-9]{4}$/)",
+          ".write": "auth != null && $numero.matches(/^[0-9]{4}$/) && (newData.exists() || auth.token.email === 'julie.granger.rennes@gmail.com')",
+          ".validate": "newData.hasChildren(['v','maj','donnees'])",
+          "v": { ".validate": "newData.isNumber()" },
+          "maj": { ".validate": "newData.isNumber()" },
+          "donnees": { ".validate": "newData.isString() && newData.val().length < 60000" },
+          "resume": { ".validate": "newData.isString() && newData.val().length < 2000" },
+          "$autre": { ".validate": false }
+        }
+      },
+
+      "resto-passe-simple": {
+        ".read": "auth != null && auth.token.email == 'julie.granger.rennes@gmail.com'",
+        "$num": {
+          ".read": "auth != null && $num.matches(/^[0-9]{4}$/)",
+          ".write": "auth != null && $num.matches(/^[0-9]{4}$/) && (newData.exists() || auth.token.email == 'julie.granger.rennes@gmail.com')",
+          ".validate": "newData.hasChildren(['v','maj','donnees'])",
+          "v": { ".validate": "newData.isNumber()" },
+          "maj": { ".validate": "newData.isNumber()" },
+          "donnees": { ".validate": "newData.isString() && newData.val().length < 60000" },
+          "$other": { ".validate": false }
+        }
+      },
+
+      "visualfadette": {
+        ".read": "auth != null && auth.token.email === 'julie.granger.rennes@gmail.com'",
+        "$numero": {
+          ".read": "auth != null && $numero.matches(/^[0-9]{4}$/)",
+          ".write": "auth != null && $numero.matches(/^[0-9]{4}$/) && (newData.exists() || auth.token.email === 'julie.granger.rennes@gmail.com')",
+          ".validate": "newData.hasChildren(['v', 'maj', 'donnees'])",
+          "v": { ".validate": "newData.isNumber()" },
+          "maj": { ".validate": "newData.isNumber()" },
+          "donnees": { ".validate": "newData.isString() && newData.val().length < 60000" },
+          "$autre": { ".validate": false }
+        }
+      },
+
+      "natures": {
+        ".read": "auth != null && auth.token.email === 'julie.granger.rennes@gmail.com'",
+        "$numero": {
+          ".read": "auth != null && $numero.matches(/^[0-9]{4}$/)",
+          ".write": "auth != null && $numero.matches(/^[0-9]{4}$/) && (newData.exists() || auth.token.email === 'julie.granger.rennes@gmail.com')",
+          ".validate": "newData.hasChildren(['v','maj','donnees'])",
+          "v": { ".validate": "newData.isNumber()" },
+          "maj": { ".validate": "newData.isNumber()" },
+          "donnees": { ".validate": "newData.isString() && newData.val().length < 60000" },
+          "resume": { ".validate": "newData.isString() && newData.val().length < 2000" },
+          "$autre": { ".validate": false }
+        }
+      }
+    }
+  }
+}

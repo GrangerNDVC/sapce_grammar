@@ -66,6 +66,7 @@
     <li><b>Version minimale pour démarrer vite</b> : les prompts marqués <span class="tag must">PRIORITÉ</span> (vaisseau niveau 1, 3 ennemis, 1 boss, 1 décor). Le jeu fonctionne déjà sans aucune image (décors de secours dessinés par le code) et prend chaque image dès que tu la déposes dans le bon dossier avec le <b>bon nom de fichier</b>.</li>
     <li>Génère toute la série dans <b>la même conversation / session</b> de ton outil d'images pour garder une cohérence de style. Pour l'évolution du vaisseau, joins l'image du niveau précédent comme référence si l'outil le permet.</li>
     <li>Le vaisseau et les ennemis sont demandés dans <b>une seule teinte</b> (cyan pour toi, magenta/violet pour les ennemis) : le jeu change la couleur par rotation de teinte, c'est ce qui permet la recoloration et de varier les ennemis par planète.</li>
+    <li><b>Musiques</b> : à générer avec Suno ou Udio (gratuit avec limites) en <b>mode instrumental</b>, titre libre. Exporte en <b>MP3</b>, nomme le fichier comme indiqué et dépose-le dans <code>assets/music/</code>. Un fichier manquant = silence, le jeu marche quand même. Les 5 « priorité » suffisent pour commencer.</li>
     <li>Les prompts sont en <b>anglais</b> (meilleurs résultats). Si tu préfères en français, dis-le-moi et je te les traduis.</li>
   </ul>
 </div>
@@ -159,16 +160,41 @@ const ITEMS = [
  {cat:"fx", file:"assets/fx/expl_big.png", label:"Explosion – Gros ennemi (amiral / boss)",
   subj:"A single huge cartoon explosion for a defeated boss in a kids' arcade space shooter: several overlapping fireballs in white, yellow, orange and red, a bright circular shockwave ring, thick stylized smoke puffs, large glowing debris chunks and sparks flying outward, epic and spectacular but not scary.", extra:FXVIEW},
  {cat:"fx", file:"assets/fx/expl_player.png", label:"Explosion – Notre vaisseau",
-  subj:"A single cartoon energy explosion for the player's spaceship being destroyed: a bright white core, cyan and electric blue fireball, a circular shockwave ring, shattered shield fragments and glowing sparks flying outward, dramatic but friendly and not scary for children.", extra:FXVIEW}
+  subj:"A single cartoon energy explosion for the player's spaceship being destroyed: a bright white core, cyan and electric blue fireball, a circular shockwave ring, shattered shield fragments and glowing sparks flying outward, dramatic but friendly and not scary for children.", extra:FXVIEW},
+ {cat:"music", file:"assets/music/title.mp3", must:true, dur:"2 min, en boucle", label:"Musique – Écran titre",
+  subj:"Epic, mysterious and inviting retro sci-fi arcade theme, 125 BPM, 8-bit chiptune lead over warm analog synth pads and a steady four-on-the-floor beat, heroic melody that makes you want to start an adventure in space.", extra:"Instrumental only, no vocals, no lyrics, no spoken voice, no sound effects. Family-friendly, fun and energetic for a children's arcade space shooter, never scary or aggressive. Seamless loop: constant energy from the first second, no slow intro, no ending, no fade-out, no long silence, so it can repeat for several minutes without being annoying."},
+ {cat:"music", file:"assets/music/map.mp3", must:false, dur:"2 min, en boucle", label:"Musique – Carte de la galaxie",
+  subj:"Calm, dreamy and curious space exploration music, 90 BPM, soft arpeggiated synths, gentle bell-like chiptune melody, light pulse bass, a sense of wonder while choosing the next planet to conquer.", extra:"Instrumental only, no vocals, no lyrics, no spoken voice, no sound effects. Family-friendly, fun and energetic for a children's arcade space shooter, never scary or aggressive. Seamless loop: constant energy from the first second, no slow intro, no ending, no fade-out, no long silence, so it can repeat for several minutes without being annoying."},
+ {cat:"music", file:"assets/music/planet_1.mp3", must:true, dur:"2 min, en boucle", label:"Musique – Planète 1 : Rubicon (désert rouge)",
+  subj:"Driving retro chiptune action music, 135 BPM, desert and western flavour with twangy synth guitar, punchy 8-bit drums, catchy repeating bass line, adventurous and fun for a first mission.", extra:"Instrumental only, no vocals, no lyrics, no spoken voice, no sound effects. Family-friendly, fun and energetic for a children's arcade space shooter, never scary or aggressive. Seamless loop: constant energy from the first second, no slow intro, no ending, no fade-out, no long silence, so it can repeat for several minutes without being annoying."},
+ {cat:"music", file:"assets/music/planet_2.mp3", must:false, dur:"2 min, en boucle", label:"Musique – Planète 2 : océan",
+  subj:"Fluid and sparkling arcade music, 130 BPM, bubbly arpeggios, watery synth plucks, rolling bass and light percussion, airy and bright underwater-world mood with a catchy melody.", extra:"Instrumental only, no vocals, no lyrics, no spoken voice, no sound effects. Family-friendly, fun and energetic for a children's arcade space shooter, never scary or aggressive. Seamless loop: constant energy from the first second, no slow intro, no ending, no fade-out, no long silence, so it can repeat for several minutes without being annoying."},
+ {cat:"music", file:"assets/music/planet_3.mp3", must:false, dur:"2 min, en boucle", label:"Musique – Planète 3 : jungle",
+  subj:"Tribal and playful arcade action music, 138 BPM, marimba and wooden percussion mixed with chiptune leads, bouncy bass, jungle rhythm, lively and adventurous.", extra:"Instrumental only, no vocals, no lyrics, no spoken voice, no sound effects. Family-friendly, fun and energetic for a children's arcade space shooter, never scary or aggressive. Seamless loop: constant energy from the first second, no slow intro, no ending, no fade-out, no long silence, so it can repeat for several minutes without being annoying."},
+ {cat:"music", file:"assets/music/planet_4.mp3", must:false, dur:"2 min, en boucle", label:"Musique – Planète 4 : glace",
+  subj:"Crystalline and energetic arcade music, 140 BPM, glassy bell synths, shimmering arpeggios, tight electronic drums, cold but exciting atmosphere with a soaring melody.", extra:"Instrumental only, no vocals, no lyrics, no spoken voice, no sound effects. Family-friendly, fun and energetic for a children's arcade space shooter, never scary or aggressive. Seamless loop: constant energy from the first second, no slow intro, no ending, no fade-out, no long silence, so it can repeat for several minutes without being annoying."},
+ {cat:"music", file:"assets/music/planet_5.mp3", must:false, dur:"2 min, en boucle", label:"Musique – Planète 5 : volcan",
+  subj:"Heavy but fun arcade action music, 145 BPM, punchy analog bass, distorted chiptune lead, pounding drums, fiery and intense mood, driving riff that never stops.", extra:"Instrumental only, no vocals, no lyrics, no spoken voice, no sound effects. Family-friendly, fun and energetic for a children's arcade space shooter, never scary or aggressive. Seamless loop: constant energy from the first second, no slow intro, no ending, no fade-out, no long silence, so it can repeat for several minutes without being annoying."},
+ {cat:"music", file:"assets/music/planet_6.mp3", must:false, dur:"2 min, en boucle", label:"Musique – Planète 6 : forteresse sombre (dernière planète)",
+  subj:"Dark, epic and determined sci-fi arcade music, 150 BPM, big saw-wave synth bass, dramatic minor-key melody, fast arpeggios and driving drums, final-mission energy but still heroic and kid-friendly.", extra:"Instrumental only, no vocals, no lyrics, no spoken voice, no sound effects. Family-friendly, fun and energetic for a children's arcade space shooter, never scary or aggressive. Seamless loop: constant energy from the first second, no slow intro, no ending, no fade-out, no long silence, so it can repeat for several minutes without being annoying."},
+ {cat:"music", file:"assets/music/boss.mp3", must:true, dur:"1 min 30, en boucle", label:"Musique – Combat de boss",
+  subj:"Intense boss battle music, 160 BPM, fast pounding drums, aggressive but playful chiptune lead, rapid bass ostinato, dramatic brass-like synth stabs, high tension and excitement.", extra:"Instrumental only, no vocals, no lyrics, no spoken voice, no sound effects. Family-friendly, fun and energetic for a children's arcade space shooter, never scary or aggressive. Seamless loop: constant energy from the first second, no slow intro, no ending, no fade-out, no long silence, so it can repeat for several minutes without being annoying."},
+ {cat:"music", file:"assets/music/boss_final.mp3", must:false, dur:"2 min, en boucle", label:"Musique – Boss final (planète 6)",
+  subj:"Epic final boss battle music, 165 BPM, huge orchestral-synth hybrid, wordless choir pads allowed (no lyrics, no words), pounding war drums, fast strings-like arpeggios, heroic yet menacing climax.", extra:"Instrumental only, no vocals, no lyrics, no spoken voice, no sound effects. Family-friendly, fun and energetic for a children's arcade space shooter, never scary or aggressive. Seamless loop: constant energy from the first second, no slow intro, no ending, no fade-out, no long silence, so it can repeat for several minutes without being annoying."},
+ {cat:"music", file:"assets/music/victory.mp3", must:true, dur:"8 à 12 s, une seule fois", label:"Musique – Victoire (planète conquise)",
+  subj:"Short triumphant victory fanfare, 120 BPM, bright chiptune trumpets and bells, rising heroic melody ending on a clear final chord, joyful and celebratory.", extra:"Instrumental only, no vocals, no lyrics, no spoken voice, no sound effects. Family-friendly, fun and energetic for a children's arcade space shooter, never scary or aggressive. One-shot jingle of about 8 to 12 seconds: it must END cleanly on a final chord, not a loop, no fade-out needed."},
+ {cat:"music", file:"assets/music/gameover.mp3", must:true, dur:"5 à 8 s, une seule fois", label:"Musique – Game over",
+  subj:"Short gentle game over jingle, slow descending chiptune melody with soft synth pads, a little sad but encouraging and kind, like 'try again', not dramatic or scary.", extra:"Instrumental only, no vocals, no lyrics, no spoken voice, no sound effects. Family-friendly, fun and energetic for a children's arcade space shooter, never scary or aggressive. One-shot jingle of about 5 to 8 seconds: it must END cleanly on a soft final note, not a loop."}
 ];
 
-const CATS = {all:"Tout (28)", ship:"Vaisseau joueur (5)", enemy:"Flotte ennemie (3)", boss:"Boss (4)", bg:"Décors (7)", orb:"Planètes de la carte (6)", fx:"Explosions (3)", must:"⭐ Priorité (10)"};
+const CATS = {all:"Tout (40)", ship:"Vaisseau joueur (5)", enemy:"Flotte ennemie (3)", boss:"Boss (4)", bg:"Décors (7)", orb:"Planètes de la carte (6)", fx:"Explosions (3)", music:"🎵 Musiques (12)", must:"⭐ Priorité (15)"};
 let currentCat = "all";
 
 function buildPrompt(it){
   const sel = document.getElementById('style').value;
   const style = sel==='custom' ? (document.getElementById('customStyle').value.trim() || STYLES.cartoon) : STYLES[sel];
   const bgmode = document.getElementById('bgmode').value;
+  if (it.cat==='music') return [it.subj, it.extra].join(" ");   // musique : prompt complet, sans style d'image
   const parts = [it.subj, "Art style: " + style + ".", it.extra];
   if (!it.bgFull) parts.push(BG[bgmode]);
   parts.push(NEG);
@@ -192,11 +218,11 @@ function render(){
   const list = document.getElementById('list');
   list.innerHTML = '';
   visibleItems().forEach((it, i) => {
-    const size = it.cat==='boss' ? '1536×1152 (4:3)' : '1024×1024 (carré)';
+    const size = it.cat==='music' ? 'Durée conseillée : '+it.dur : 'Taille conseillée : '+(it.cat==='boss' ? '1536×1152 (4:3)' : '1024×1024 (carré)');
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `<h3>${it.label}<span class="tag ${it.must?'must':'opt'}">${it.must?'PRIORITÉ':'optionnel'}</span></h3>
-      <div class="meta">Fichier à nommer : <b>${it.file}</b> · Taille conseillée : ${size}</div>
+      <div class="meta">Fichier à nommer : <b>${it.file}</b> · ${size}</div>
       <textarea readonly></textarea>
       <button class="copy">📋 Copier ce prompt</button>`;
     const ta = card.querySelector('textarea');

@@ -3,12 +3,18 @@
   const box = $('game-container');
   const MAX_LIVES = 10;
   const KILLS_PER_WAVE = 8;
+  const SHIP_HALF = 45;          // demi-largeur du vaisseau (px)
+  const KEY_SPEED = 9;           // vitesse clavier (px par image)
 
   let progress = SGStore.loadProgress();
   let cos = SGStore.loadCosmetics();
   let S = null;                  // état de la partie en cours
   const assetOK = {};            // image dispo ? (true/false)
   let tickTimer = null, spawnTimer = null, bannerTimer = null;
+  let teacherMode = false;
+  const cheat = { infiniteLives: false, bossHp1: false };
+  const keys = { left: false, right: false };
+  let shipX = 0, targetX = 0, shipVX = 0, lastHint = 0;
 
   // ---------- IMAGES (avec repli si absentes) ----------
   function preload() {
@@ -33,19 +39,29 @@
     s += '<polygon points="44,78 56,78 50,95" fill="#ffc400" opacity=".85"/></svg>';
     return s;
   }
+  function hueColor(deg) { return 'hsl(' + ((180 + deg + 360) % 360) + ',100%,60%)'; }
+  // Couleur du vaisseau : rotation de teinte, ou version noire
+  function tintFilter() {
+    return cos.black ? 'grayscale(1) brightness(.4) contrast(1.35) drop-shadow(0 0 2px rgba(255,255,255,.7))'
+                     : 'hue-rotate(' + cos.hue + 'deg)';
+  }
+  // Couleur de l'aura (lueur / pulsation) : choisie à part, ou "comme le vaisseau"
+  function auraCss() {
+    if (cos.auraColor && cos.auraColor !== 'auto') return cos.auraColor;
+    return cos.black ? '#ffffff' : hueColor(cos.hue);
+  }
   function shipBody(tier) {
     const s = src('ship' + tier);
-    return '<div class="body" style="filter:hue-rotate(' + cos.hue + 'deg)">' +
-      (s ? '<img src="' + s + '" alt="">' : fallbackShipSVG(tier)) + '</div>' +
+    return '<div class="body"><div class="tint" style="filter:' + tintFilter() + '">' +
+      (s ? '<img src="' + s + '" alt="">' : fallbackShipSVG(tier)) + '</div></div>' +
       (cos.badge ? '<div class="badge">' + cos.badge + '</div>' : '');
   }
   function applyShip(el, tier) {
-    el.className = el.id === 'ship-preview' ? '' : '';
+    el.classList.remove('aura-none', 'aura-glow', 'aura-pulse');
     el.classList.add('aura-' + cos.aura);
-    el.style.setProperty('--shipglow', hueColor(cos.hue));
+    el.style.setProperty('--shipglow', auraCss());
     el.innerHTML = shipBody(tier);
   }
-  function hueColor(deg) { return 'hsl(' + ((180 + deg + 360) % 360) + ',100%,60%)'; }
   function shipTier() { return S ? Math.min(5, S.idx + 1) : Math.min(5, progress.unlocked + 1); }
 
   function refreshVisuals() {
@@ -65,13 +81,17 @@
   // ---------- ÉCRANS ----------
   function showScreen(id) {
     document.querySelectorAll('.overlay').forEach(o => o.classList.remove('show'));
-    if (id) $(id).classList.add('show');
-    if (id) setHud(false);
+    if (id) {
+      $(id).classList.add('show');
+      setHud(false);
+      if (window.SGMusic) SGMusic.screen(id);
+    }
   }
   function setHud(on) {
     $('info-bar').style.display = on ? 'flex' : 'none';
     $('controls').style.display = on ? 'flex' : 'none';
     $('ship').style.display = on ? 'block' : 'none';
+    $('cheatbar').style.display = (on && teacherMode) ? 'flex' : 'none';
     if (!on) { $('boss').style.display = 'none'; $('boss-bar-wrap').style.display = 'none'; }
   }
 
@@ -101,10 +121,19 @@
         c.appendChild(d);
       });
     };
-    mk('opt-hue', SHIP_HUES, h => h.deg === cos.hue, h => cos.hue = h.deg, (d, h) => { d.style.background = hueColor(h.deg); d.title = h.name; });
-    mk('opt-laser', LASER_COLORS, c => c === cos.laser, c => cos.laser = c, (d, c) => { d.style.background = c; });
+    const darkRing = (d, c) => { if (c === '#000000' || c === '#111') d.style.boxShadow = 'inset 0 0 0 1px #777'; };
+    mk('opt-hue', SHIP_HUES,
+      h => h.black ? !!cos.black : (!cos.black && h.deg === cos.hue),
+      h => { cos.black = !!h.black; if (!h.black) cos.hue = h.deg; },
+      (d, h) => { d.style.background = h.black ? '#111' : hueColor(h.deg); d.title = h.name; darkRing(d, h.black ? '#111' : ''); });
+    mk('opt-laser', LASER_COLORS, c => c === cos.laser, c => cos.laser = c, (d, c) => { d.style.background = c; darkRing(d, c); });
     mk('opt-badge', BADGES, b => b === cos.badge, b => cos.badge = b, (d, b) => { d.textContent = b || '∅'; });
     mk('opt-aura', AURAS, a => a.id === cos.aura, a => cos.aura = a.id, (d, a) => { d.textContent = a.name; });
+    mk('opt-auracolor', AURA_COLORS, c => c === (cos.auraColor || 'auto'), c => cos.auraColor = c, (d, c) => {
+      if (c === 'auto') { d.textContent = '='; d.title = 'Comme le vaisseau'; d.style.background = 'linear-gradient(135deg,#00e6e6,#ff00ff)'; }
+      else { d.style.background = c; darkRing(d, c); }
+    });
+    $('opt-auracolor').parentElement.style.opacity = cos.aura === 'none' ? .4 : 1;
   }
 
   // ---------- PARTIE ----------
@@ -112,13 +141,16 @@
     stopLoops();
     S = { idx, wave: 0, kills: 0, lives: MAX_LIVES, score: 0, running: false, paused: true,
           bossHp: 0, bossMax: 0, admiralDone: false, admiralDead: false, active: [], planet: PLANETS[idx] };
-    box.querySelectorAll('.enemy, .laser-beam').forEach(e => e.remove());
+    box.querySelectorAll('.enemy, .laser-beam, .explosion').forEach(e => e.remove());
     showScreen(null);
     $('ship').style.opacity = '';
     setHud(true);
     setBg(idx);
     applyShip($('ship'), shipTier());
+    shipX = targetX = playW() / 2; shipVX = 0;
+    $('ship').style.left = shipX + 'px';
     $('ship').classList.add('ship-upgrade'); setTimeout(() => $('ship').classList.remove('ship-upgrade'), 1000);
+    if (window.SGMusic) SGMusic.planet(idx);
     SGHooks.onEvent('planet_start', { planet: idx + 1 });
     beginWave();
     tickTimer = setInterval(tick, 16);
@@ -147,6 +179,7 @@
     else txt = '⚠ BOSS ⚠<br>' + p.bossName.toUpperCase();
     banner(txt, 1700);
     if (S.wave > 0) SFX.levelup();
+    if (isBoss && window.SGMusic) SGMusic.boss(S.idx === PLANETS.length - 1);
     setTimeout(() => {
       if (!S || !S.running) return;
       if (isBoss) showBoss();
@@ -157,7 +190,7 @@
 
   function showBoss() {
     const p = S.planet;
-    S.bossMax = S.bossHp = p.bossHp;
+    S.bossMax = S.bossHp = cheat.bossHp1 ? 1 : p.bossHp;
     const b = $('boss');
     const s = src(p.bossImg);
     b.className = '';
@@ -169,24 +202,44 @@
     $('boss-bar-fill').style.width = '100%';
   }
 
+  // ---------- BAC À MUNITIONS (à droite) : ↑ ↓ pour choisir, Espace pour tirer, ou clic / toucher ----------
   function generateButtons() {
     const c = $('controls'); c.innerHTML = '';
     const pool = S.planet.natures;
     let list = pool;
     if (pool.length > 6) list = [...pool].sort(() => 0.5 - Math.random()).slice(0, 6);
-    S.buttons = list;
+    S.buttons = list; S.sel = 0;
+    const t = document.createElement('div'); t.className = 'bay-title'; t.textContent = 'MUNITIONS'; c.appendChild(t);
     list.forEach((n, i) => {
       const b = document.createElement('button');
-      b.className = 'tense-button'; b.textContent = n; b.dataset.nature = n; b.title = 'Touche ' + (i + 1);
+      b.className = 'tense-button'; b.tabIndex = -1; b.dataset.i = i; b.dataset.nature = n;
+      b.innerHTML = '<span class="k">' + (i + 1) + '</span><span class="n"></span>';
+      b.querySelector('.n').textContent = n;
       c.appendChild(b);
     });
-    // place le vaisseau juste au-dessus des boutons
-    requestAnimationFrame(() => { $('ship').style.bottom = (c.offsetHeight + 6) + 'px'; });
+    const h = document.createElement('div'); h.className = 'bay-hint'; h.innerHTML = '↑↓ choisir<br>Espace tirer'; c.appendChild(h);
+    paintBay();
+  }
+  function paintBay() {
+    document.querySelectorAll('#controls .tense-button').forEach(b => b.classList.toggle('sel', +b.dataset.i === S.sel));
+  }
+  function moveSel(d) {
+    if (!S || !S.buttons) return;
+    const n = S.buttons.length;
+    S.sel = (S.sel + d + n) % n; paintBay();
+  }
+  function fire(i) {
+    if (!S || !S.running || !S.buttons) return;
+    if (i !== undefined) { S.sel = i; paintBay(); }
+    const b = document.querySelector('#controls .tense-button[data-i="' + S.sel + '"]');
+    if (b) { b.classList.add('fired'); setTimeout(() => b.classList.remove('fired'), 180); }
+    onAnswer(S.buttons[S.sel]);
   }
 
   function spawnRate() {
     const base = S.wave === 2 ? 1800 - S.idx * 90 : 2300 - S.idx * 150 - S.wave * 100;
-    return Math.max(950, base);
+    // un peu plus lent qu'avant : il faut le temps de se placer en face de l'ennemi
+    return Math.max(1100, base + 250);
   }
   function scheduleSpawn(delay) {
     clearTimeout(spawnTimer);
@@ -214,7 +267,7 @@
     const el = document.createElement('div');
     el.className = 'enemy ' + kind;
     el.style.setProperty('--sz', sz + 'px');
-    el.dataset.nature = w.class; el.dataset.kind = kind; el.dataset.hp = kind === 'admiral' ? 2 : 1;
+    el.dataset.nature = w.class; el.dataset.kind = kind; el.dataset.hp = kind === 'admiral' ? 2 : 1; el.dataset.sz = sz;
     const s = src(kind);
     const fb = { scout: '#4B0082', cruiser: '#8a1c5c', admiral: '#b8860b' }[kind];
     el.innerHTML = (kind === 'admiral' ? '<div class="hp">❤❤</div>' : '') +
@@ -226,23 +279,57 @@
     el.style.visibility = 'hidden';
     box.appendChild(el);
     const ww = el.offsetWidth;
-    el.style.left = Math.floor(Math.random() * Math.max(0, box.clientWidth - ww - 10)) + 'px';
+    el.style.left = Math.floor(Math.random() * Math.max(0, playW() - ww - 10)) + 'px';
     el.style.visibility = 'visible';
     S.active.push(el);
   }
 
+  // largeur de la zone de jeu = conteneur moins le bac à munitions
+  function playW() { const c = $('controls'); return box.clientWidth - (c.offsetWidth || 0); }
   function speed() { return S.planet.speed + S.wave * 0.12 + (S.wave === 2 ? 0.15 : 0); }
 
+  // ---------- DÉPLACEMENT : flèches (ou Q/D, A/D) + souris/doigt, utilisables en même temps ----------
+  function moveShip() {
+    const W = playW();
+    if (keys.left) targetX -= KEY_SPEED;
+    if (keys.right) targetX += KEY_SPEED;
+    targetX = Math.max(SHIP_HALF, Math.min(W - SHIP_HALF, targetX));
+    shipVX = Math.max(-16, Math.min(16, (targetX - shipX) * 0.3));
+    shipX += shipVX;
+    const ship = $('ship');
+    ship.style.left = shipX + 'px';
+    const body = ship.firstChild;
+    if (body && body.style) body.style.transform = 'rotate(' + (shipVX * 0.7).toFixed(1) + 'deg)';
+  }
+  // L'ennemi "en face" = le plus bas dont le centre est dans la colonne du vaisseau
+  function tolerance(el) { return Math.max(34, (parseFloat(el.dataset.sz) || 70) / 2) + 8; }
+  function lockedEnemy() {
+    let best = null;
+    for (const el of S.active) {
+      if (el.classList.contains('destroyed')) continue;
+      const cx = el.offsetLeft + el.offsetWidth / 2;
+      if (Math.abs(cx - shipX) <= tolerance(el) && (!best || el.offsetTop > best.offsetTop)) best = el;
+    }
+    return best;
+  }
+
   function tick() {
-    if (!S || !S.running || S.paused) return;
+    if (!S || !S.running) return;
+    moveShip();
+    if (S.paused) return;
+    const lk = lockedEnemy();
     const limit = $('ship').offsetTop - 10;
     const v = speed();
     for (const el of S.active.slice()) {
+      el.classList.toggle('locked', el === lk);
       if (el.classList.contains('destroyed')) continue;
       const top = parseFloat(el.style.top);
       const nt = top + v * (el.dataset.kind === 'admiral' ? 0.75 : 1);
       el.style.top = nt + 'px';
-      if (nt + el.offsetHeight > limit) { removeEnemy(el); loseLife(); if (!S || !S.running) return; }
+      if (nt + el.offsetHeight > limit) {
+        SGHooks.onEvent('missed', { planet: S.idx + 1, word: el.querySelector('.word').textContent, nature: el.dataset.nature });
+        removeEnemy(el); loseLife(); if (!S || !S.running) return;
+      }
     }
   }
   function removeEnemy(el) { el.remove(); if (S) S.active = S.active.filter(e => e !== el); }
@@ -264,13 +351,17 @@
       setTimeout(() => l.remove(), 300);
     }
   }
-  function shootBoss() {
+  function shootAir() {   // tir dans le vide : aucun ennemi en face
     SFX.laser();
-    const g = box.getBoundingClientRect(), sh = $('ship').getBoundingClientRect(), b = $('boss').getBoundingClientRect();
+    const g = box.getBoundingClientRect(), sh = $('ship').getBoundingClientRect();
     const l = document.createElement('div'); l.className = 'laser-beam';
     l.style.left = (sh.left - g.left + sh.width / 2) + 'px'; l.style.top = (sh.top - g.top) + 'px'; box.appendChild(l);
-    requestAnimationFrame(() => { l.style.left = (b.left - g.left + b.width / 2) + 'px'; l.style.top = (b.top - g.top + b.height / 2) + 'px'; });
+    requestAnimationFrame(() => { l.style.top = '40px'; });
     setTimeout(() => l.remove(), 300);
+  }
+  function hintAlign() {
+    const now = Date.now(); if (now - lastHint < 2500) return; lastHint = now;
+    banner('Place-toi en face<br>d\'un ennemi !', 1100);
   }
 
   // ---------- EXPLOSIONS ----------
@@ -293,9 +384,8 @@
   // ---------- RÉPONSES ----------
   function onAnswer(chosen) {
     if (!S || !S.running || S.paused) return;
-    const targets = S.active.filter(e => !e.classList.contains('destroyed'));
-    if (!targets.length) return;
-    const target = targets.sort((a, b) => b.offsetTop - a.offsetTop)[0];
+    const target = lockedEnemy();
+    if (!target) { shootAir(); hintAlign(); return; }   // pas en face : rien ne se passe
     const word = target.querySelector('.word').textContent;
     const ok = target.dataset.nature === chosen;
     SGHooks.onEvent('answer', { planet: S.idx + 1, word, expected: target.dataset.nature, chosen, correct: ok });
@@ -318,7 +408,10 @@
         SFX.boom();
         const c = centerOf(target), k = target.dataset.kind;
         explode(c.x, c.y, k === 'admiral' ? 200 : k === 'cruiser' ? 140 : 110, k === 'admiral' ? 'expl_big' : 'expl_enemy');
-        target.classList.add('destroyed'); S.active = S.active.filter(e => e !== target); setTimeout(() => target.remove(), 220); }, 150);
+        target.classList.add('destroyed');
+        S && (S.active = S.active.filter(e => e !== target));
+        setTimeout(() => target.remove(), 220);
+      }, 150);
     }
     updateHud();
     if (S.wave === 0 && S.kills >= KILLS_PER_WAVE) waveCleared();
@@ -342,7 +435,7 @@
 
   function loseLife() {
     SFX.error();
-    S.lives--;
+    if (!cheat.infiniteLives) S.lives--;
     updateHud();
     box.style.boxShadow = '0 0 30px #ff2d2d'; setTimeout(() => { box.style.boxShadow = ''; }, 200);
     if (S.lives <= 0) gameOver();
@@ -351,6 +444,7 @@
   function bossDefeated() {
     S.running = false; stopLoops();
     SFX.bossDown();
+    if (window.SGMusic) SGMusic.fadeOut();
     const bc = centerOf($('boss'));
     for (let i = 0; i < 5; i++) {
       setTimeout(() => explode(bc.x + (Math.random() - .5) * bc.w * .7, bc.y + (Math.random() - .5) * bc.h * .6, 150 + Math.random() * 80, 'expl_big'), i * 180);
@@ -380,6 +474,7 @@
 
   function gameOver() {
     S.running = false; stopLoops();
+    if (window.SGMusic) SGMusic.fadeOut();
     SGHooks.onEvent('game_over', { planet: S.idx + 1, score: S.score });
     progress.best = Math.max(progress.best, S.score); SGStore.saveProgress(progress);
     $('over-text').textContent = 'Planète ' + S.planet.name + ' · Score : ' + S.score + ' · Meilleur : ' + progress.best;
@@ -395,16 +490,61 @@
     $('i-score').textContent = 'Score : ' + S.score;
     $('i-planet').textContent = 'Planète ' + S.planet.id;
     $('i-wave').textContent = S.wave === 2 ? 'BOSS' : 'Vague ' + (S.wave + 1) + '/3';
-    $('i-lives').textContent = 'Vies : ' + S.lives;
+    $('i-lives').textContent = 'Vies : ' + (cheat.infiniteLives ? '∞' : S.lives);
   }
 
+  // ---------- OUTILS ENSEIGNANT (barre de triche) ----------
+  function cheatSkip() {
+    if (!S || !S.running || S.paused) return;
+    if (S.wave < 2) waveCleared(); else cheatKillBoss();
+  }
+  function cheatKillBoss() {
+    if (!S || !S.running || S.paused) return;
+    if (S.wave < 2) { S.wave = 1; waveCleared(); return; }   // saute d'abord jusqu'au boss
+    S.bossHp = 0; $('boss-bar-fill').style.width = '0%'; bossDefeated();
+  }
+  function cheatLives() { if (S) { S.lives = MAX_LIVES; updateHud(); } }
+  function cheatToMap() {
+    stopLoops(); if (S) S.running = false;
+    box.querySelectorAll('.enemy, .laser-beam, .explosion').forEach(e => e.remove());
+    $('banner').style.opacity = 0;
+    S = null; renderMap(); setBg(null); showScreen('map-screen');
+  }
+  $('ch-skip').onclick = cheatSkip;
+  $('ch-boss').onclick = cheatKillBoss;
+  $('ch-lives').onclick = cheatLives;
+  $('ch-map').onclick = cheatToMap;
+
   // ---------- ÉVÉNEMENTS ----------
-  $('controls').addEventListener('click', e => { const n = e.target.dataset.nature; if (n) onAnswer(n); });
+  $('controls').addEventListener('mousedown', e => e.preventDefault());   // le bac ne prend jamais le focus (sinon Espace re-cliquerait)
+  $('controls').addEventListener('click', e => { const b = e.target.closest('.tense-button'); if (b) fire(+b.dataset.i); });
   document.addEventListener('keydown', e => {
     if (!S || !S.running) return;
-    const i = parseInt(e.key) - 1;
-    if (i >= 0 && S.buttons && S.buttons[i]) onAnswer(S.buttons[i]);
+    const k = e.key;
+    if (k === 'ArrowLeft' || k === 'q' || k === 'Q' || k === 'a' || k === 'A') { keys.left = true; e.preventDefault(); return; }
+    if (k === 'ArrowRight' || k === 'd' || k === 'D') { keys.right = true; e.preventDefault(); return; }
+    if (k === 'ArrowUp' || k === 'z' || k === 'Z' || k === 'w' || k === 'W') { moveSel(-1); e.preventDefault(); return; }
+    if (k === 'ArrowDown' || k === 's' || k === 'S') { moveSel(1); e.preventDefault(); return; }
+    if (k === ' ' || k === 'Enter') { e.preventDefault(); if (!e.repeat) fire(); return; }
+    const i = parseInt(k) - 1;
+    if (i >= 0 && S.buttons && S.buttons[i]) fire(i);
   });
+  document.addEventListener('keyup', e => {
+    const k = e.key;
+    if (k === 'ArrowLeft' || k === 'q' || k === 'Q' || k === 'a' || k === 'A') keys.left = false;
+    if (k === 'ArrowRight' || k === 'd' || k === 'D') keys.right = false;
+  });
+  window.addEventListener('blur', () => { keys.left = keys.right = false; });
+  // Souris / doigt : le vaisseau suit le pointeur (sauf près des boutons, pour ne pas dériver quand on va cliquer)
+  function steer(e) {
+    if (!S || !S.running) return;
+    const r = box.getBoundingClientRect();
+    if (e.target.closest && e.target.closest('#controls')) return;   // sur le bac : on ne déplace pas le vaisseau
+    targetX = e.clientX - r.left;
+  }
+  box.addEventListener('pointermove', steer);
+  box.addEventListener('pointerdown', steer);
+
   $('btn-play').onclick = () => { SFX.unlock(); renderMap(); showScreen('map-screen'); SGHooks.onEvent('game_start', {}); };
   $('btn-custom').onclick = () => { SFX.unlock(); renderCustom(); showScreen('custom-screen'); };
   $('btn-custom-ok').onclick = () => { showScreen('title-screen'); };
@@ -413,6 +553,22 @@
   $('btn-over-map').onclick = () => { S = null; renderMap(); showScreen('map-screen'); setBg(null); };
   $('btn-retry').onclick = () => startPlanet(S.idx);
   $('btn-next').onclick = () => startPlanet(Math.min(PLANETS.length - 1, S.idx + 1));
+
+  // ---------- API pour cloud.js (comptes, espace enseignant) ----------
+  window.SGGame = {
+    cheat,
+    reloadProfile() { progress = SGStore.loadProgress(); cos = SGStore.loadCosmetics(); refreshVisuals(); },
+    isIdle: () => !S || !S.running,
+    show: id => showScreen(id),
+    openMap() { cheatToMap(); },
+    setTeacherMode(on) {
+      teacherMode = on;
+      if (!on) { cheat.infiniteLives = false; cheat.bossHp1 = false; }
+      setHud(false);
+    },
+    unlockAll() { progress.unlocked = PLANETS.length - 1; SGStore.saveProgress(progress); refreshVisuals(); },
+    resetTest() { if (SGStore.profile === 'prof') { SGStore.resetProfile(); this.reloadProfile(); } }
+  };
 
   // ---------- DÉMARRAGE ----------
   setHud(false);
