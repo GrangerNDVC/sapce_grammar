@@ -172,3 +172,16 @@ button { font-family: inherit; touch-action: manipulation; }
 #speed-pick .swatches { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 @media (min-width: 700px) { :root { --bay: 170px; } .tense-button { font-size: 14px; min-height: 46px; } }
 @media (hover: none) { .bay-hint { display: none; } }
+
+/* --- smartphones uniquement (portrait étroit ou paysage bas) : bac plus étroit + abréviations --- */
+.tense-button .ab { display: none; }
+@media (max-width: 520px), (max-height: 520px) {
+  :root { --bay: 86px; }
+  #controls { padding: 6px 4px; gap: 5px; }
+  .bay-title { font-size: .42em; }
+  .tense-button { font-size: 11.5px; padding: 5px 4px; min-height: 36px; justify-content: center; text-align: center; }
+  .tense-button .n { display: none; }
+  .tense-button .ab { display: inline; }
+  .tense-button .k { display: none; }
+  .tense-button.sel { transform: translateX(-4px); }
+}

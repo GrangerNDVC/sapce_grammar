@@ -226,8 +226,10 @@
     list.forEach((n, i) => {
       const b = document.createElement('button');
       b.className = 'tense-button'; b.tabIndex = -1; b.dataset.i = i; b.dataset.nature = n;
-      b.innerHTML = '<span class="k">' + (i + 1) + '</span><span class="n"></span>';
+      b.innerHTML = '<span class="k">' + (i + 1) + '</span><span class="n"></span><span class="ab"></span>';
       b.querySelector('.n').textContent = n;
+      b.querySelector('.ab').textContent = ABBR[n] || n;
+      b.title = n;
       c.appendChild(b);
     });
     const h = document.createElement('div'); h.className = 'bay-hint'; h.innerHTML = '↑↓ choisir<br>Espace tirer'; c.appendChild(h);

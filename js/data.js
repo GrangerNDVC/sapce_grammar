@@ -8,6 +8,15 @@ const ALL_NATURES = [
   'Pron. Relatif', 'Pron. Interrogatif'
 ];
 
+// Abréviations du bac à munitions (affichées uniquement sur smartphone)
+const ABBR = {
+  'Adjectif': 'Adj.', 'Adverbe': 'Adv.', 'Préposition': 'Prép.', 'Conjonction': 'Conj.', 'Interjection': 'Interj.',
+  'Dét. Art. Défini': 'Art. déf.', 'Dét. Art. Indéfini': 'Art. indéf.', 'Dét. Art. Contracté': 'Art. contr.',
+  'Dét. Possessif': 'Dét. poss.', 'Dét. Démonstratif': 'Dét. dém.', 'Dét. Indéfini': 'Dét. indéf.', 'Dét. Numéral': 'Dét. num.',
+  'Pron. Personnel': 'Pron. pers.', 'Pron. Possessif': 'Pron. poss.', 'Pron. Démonstratif': 'Pron. dém.', 'Pron. Indéfini': 'Pron. indéf.',
+  'Pron. Relatif': 'Pron. rel.', 'Pron. Interrogatif': 'Pron. interr.'
+};
+
 const WORDS = [
   { word: "chat", class: "Nom" }, { word: "soleil", class: "Nom" }, { word: "liberté", class: "Nom" }, { word: "table", class: "Nom" },
   { word: "maison", class: "Nom" }, { word: "école", class: "Nom" },

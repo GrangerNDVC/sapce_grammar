@@ -71,3 +71,4 @@ Bouton 🏆 SCORES dans le menu : top 10 (meilleur score + planètes conquises).
 ### Vitesse et tablettes (06/11/2026)
 - Sur la carte : choix de la vitesse des ennemis, avec multiplicateur de points : 🐢 Cadet ×1 (par défaut) · 🚀 Pilote ×1,5 · ⚡ Commandant ×2 · 🔥 Légende ×3. Le choix est sauvegardé avec le profil.
 - iPad / smartphone : commandes tactiles (glisser le doigt pour placer le vaisseau, toucher une munition pour tirer, les deux en même temps), écran adapté (dvh), volume de la musique géré par Web Audio (iOS ignore le volume des balises audio). Le son démarre au premier toucher (règle iOS).
+- Smartphone uniquement : bac à munitions plus étroit (86 px) avec abréviations (table ABBR dans data.js). Tablettes et ordinateurs inchangés.
